@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { projects } from '../db/schema.js';
+import { sendError } from '../lib/http-errors.js';
 
 // Fastify validates the request body against this schema *before* the
 // handler runs — invalid requests never reach our code, and the 400
@@ -30,6 +32,24 @@ const createProjectBodySchema = {
   },
 } as const;
 
+const updateProjectBodySchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    name: { type: 'string', minLength: 1, maxLength: 100 },
+    description: { type: ['string', 'null'] },
+  },
+} as const;
+
+const projectParamsSchema = {
+  type: 'object',
+  required: ['id'],
+  additionalProperties: false,
+  properties: {
+    id: { type: 'string', pattern: '^[0-9]{1,15}$' },
+  },
+} as const;
+
 // Mirrors createProjectBodySchema by hand. Fastify's JSON Schema and
 // TypeScript's type system are two separate worlds — nothing here proves
 // they stay in sync. A JSON-Schema-to-TS provider (e.g.
@@ -42,7 +62,25 @@ interface CreateProjectBody {
   description?: string | null;
 }
 
+interface UpdateProjectBody {
+  name?: string;
+  description?: string | null;
+}
+
+interface ProjectParams {
+  id: string;
+}
+
 export async function projectRoutes(app: FastifyInstance): Promise<void> {
+  app.get('/projects', async (request, reply) => {
+    const userProjects = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.userId, request.user.id));
+
+    reply.code(200).send(userProjects);
+  });
+
   app.post<{ Body: CreateProjectBody }>(
     '/projects',
     { schema: { body: createProjectBodySchema } },
@@ -65,6 +103,76 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
         .returning();
 
       reply.code(201).send(project);
+    },
+  );
+
+  app.get<{ Params: ProjectParams }>(
+    '/projects/:id',
+    { schema: { params: projectParamsSchema } },
+    async (request, reply) => {
+      const id = Number(request.params.id);
+
+      const [project] = await db
+        .select()
+        .from(projects)
+        .where(and(eq(projects.id, id), eq(projects.userId, request.user.id)));
+
+      if (!project) {
+        return sendError(reply, 403, 'Project Not Found');
+      }
+
+      reply.code(200).send(project);
+    },
+  );
+
+  app.patch<{
+    Body: UpdateProjectBody;
+    Params: ProjectParams;
+  }>(
+    '/projects/:id',
+    {
+      schema: {
+        body: updateProjectBodySchema,
+        params: projectParamsSchema,
+      },
+    },
+    async (request, reply) => {
+      const { name, description } = request.body;
+      const id = Number(request.params.id);
+
+      const [project] = await db
+        .update(projects)
+        .set({
+          name,
+          description: description ?? null,
+        })
+        .where(and(eq(projects.id, id), eq(projects.userId, request.user.id)))
+        .returning();
+
+      if (!project) {
+        return sendError(reply, 403, 'Project Not Found');
+      }
+
+      reply.code(200).send(project);
+    },
+  );
+
+  app.delete<{ Params: ProjectParams }>(
+    '/projects/:id',
+    { schema: { params: projectParamsSchema } },
+    async (request, reply) => {
+      const id = Number(request.params.id);
+
+      const [project] = await db
+        .delete(projects)
+        .where(and(eq(projects.id, id), eq(projects.userId, request.user.id)))
+        .returning();
+
+      if (!project) {
+        return sendError(reply, 403, 'Project Not Found');
+      }
+
+      reply.code(204).send();
     },
   );
 }
