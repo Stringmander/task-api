@@ -55,10 +55,7 @@ interface CreateProjectBody {
   description?: string | null;
 }
 
-interface UpdateProjectBody {
-  name?: string;
-  description?: string | null;
-}
+type UpdateProjectBody = Partial<CreateProjectBody>;
 
 export async function projectRoutes(app: FastifyInstance): Promise<void> {
   app.get('/projects', async (request, reply) => {
