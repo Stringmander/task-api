@@ -4,6 +4,7 @@ import { db } from '../db/index.js';
 import { projects } from '../db/schema.js';
 import { sendError } from '../lib/http-errors.js';
 import { idParamSchema, IdParams } from '../lib/params.js';
+import { findOwnedProject } from '../lib/ownership.js';
 
 // Fastify validates the request body against this schema *before* the
 // handler runs — invalid requests never reach our code, and the 400
@@ -104,10 +105,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
       // Drizzle expects, not a precision-losing shortcut.
       const id = Number(request.params.id);
 
-      const [project] = await db
-        .select()
-        .from(projects)
-        .where(and(eq(projects.id, id), eq(projects.userId, request.user.id)));
+      const project = await findOwnedProject(request.user.id, id);
 
       // 403, never 404: a combined id+userId WHERE can't tell "doesn't exist"
       // from "someone else's project" apart, and docs/ROUTE_PATTERN.md wants
