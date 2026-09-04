@@ -110,6 +110,10 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
     '/projects/:id',
     { schema: { params: projectParamsSchema } },
     async (request, reply) => {
+      // Safe as a plain Number(): projectParamsSchema's pattern caps id at 15
+      // digits, well under Number.MAX_SAFE_INTEGER, and the id column is a
+      // bigserial declared with `mode: 'number'` — so this is the conversion
+      // Drizzle expects, not a precision-losing shortcut.
       const id = Number(request.params.id);
 
       const [project] = await db
@@ -117,6 +121,9 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
         .from(projects)
         .where(and(eq(projects.id, id), eq(projects.userId, request.user.id)));
 
+      // 403, never 404: a combined id+userId WHERE can't tell "doesn't exist"
+      // from "someone else's project" apart, and docs/ROUTE_PATTERN.md wants
+      // it that way — a 404 here would confirm the id exists at all.
       if (!project) {
         return sendError(reply, 403, 'Project Not Found');
       }
@@ -140,6 +147,11 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
       const { name, description } = request.body;
       const id = Number(request.params.id);
 
+      // A field the client omitted comes through as undefined here (the
+      // schema has no `required`), and Drizzle's .set() skips undefined keys
+      // rather than writing SQL NULL — confirmed by hand against `name`,
+      // which is NOT NULL in the schema. That's what makes this a true
+      // partial update instead of clobbering omitted columns.
       const [project] = await db
         .update(projects)
         .set({
