@@ -124,14 +124,14 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
 
       // A field the client omitted comes through as undefined here (the
       // schema has no `required`), and Drizzle's .set() skips undefined keys
-      // rather than writing SQL NULL — confirmed by hand against `name`,
-      // which is NOT NULL in the schema. That's what makes this a true
-      // partial update instead of clobbering omitted columns.
+      // rather than writing SQL NULL — confirmed by hand against `name` and
+      // 'description', which is NOT NULL in the schema. That's what makes this
+      // a true partial update instead of clobbering omitted columns.
       const [project] = await db
         .update(projects)
         .set({
           name,
-          description: description ?? null,
+          description,
         })
         .where(and(eq(projects.id, id), eq(projects.userId, request.user.id)))
         .returning();
