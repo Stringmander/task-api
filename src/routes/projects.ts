@@ -120,17 +120,9 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  app.patch<{
-    Body: UpdateProjectBody;
-    Params: IdParams;
-  }>(
+  app.patch<{ Body: UpdateProjectBody; Params: IdParams }>(
     '/projects/:id',
-    {
-      schema: {
-        body: updateProjectBodySchema,
-        params: idParamSchema,
-      },
-    },
+    { schema: { body: updateProjectBodySchema, params: idParamSchema } },
     async (request, reply) => {
       const { name, description } = request.body;
       const id = Number(request.params.id);
