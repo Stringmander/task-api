@@ -113,7 +113,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
       // from "someone else's project" apart, and docs/ROUTE_PATTERN.md wants
       // it that way — a 404 here would confirm the id exists at all.
       if (!project) {
-        return sendError(reply, 403, 'Project Not Found');
+        return sendError(reply, 403, 'Project not found');
       }
 
       reply.code(200).send(project);
@@ -142,7 +142,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
         .returning();
 
       if (!project) {
-        return sendError(reply, 403, 'Project Not Found');
+        return sendError(reply, 403, 'Project not found');
       }
 
       reply.code(200).send(project);
@@ -161,7 +161,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
         .returning();
 
       if (!project) {
-        return sendError(reply, 403, 'Project Not Found');
+        return sendError(reply, 403, 'Project not found');
       }
 
       reply.code(204).send();
