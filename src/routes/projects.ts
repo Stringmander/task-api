@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { projects } from '../db/schema.js';
 import { sendError } from '../lib/http-errors.js';
+import { idParamSchema, IdParams } from '../lib/params.js';
 
 // Fastify validates the request body against this schema *before* the
 // handler runs — invalid requests never reach our code, and the 400
@@ -41,15 +42,6 @@ const updateProjectBodySchema = {
   },
 } as const;
 
-const projectParamsSchema = {
-  type: 'object',
-  required: ['id'],
-  additionalProperties: false,
-  properties: {
-    id: { type: 'string', pattern: '^[0-9]{1,15}$' },
-  },
-} as const;
-
 // Mirrors createProjectBodySchema by hand. Fastify's JSON Schema and
 // TypeScript's type system are two separate worlds — nothing here proves
 // they stay in sync. A JSON-Schema-to-TS provider (e.g.
@@ -65,10 +57,6 @@ interface CreateProjectBody {
 interface UpdateProjectBody {
   name?: string;
   description?: string | null;
-}
-
-interface ProjectParams {
-  id: string;
 }
 
 export async function projectRoutes(app: FastifyInstance): Promise<void> {
@@ -106,11 +94,11 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  app.get<{ Params: ProjectParams }>(
+  app.get<{ Params: IdParams }>(
     '/projects/:id',
-    { schema: { params: projectParamsSchema } },
+    { schema: { params: idParamSchema } },
     async (request, reply) => {
-      // Safe as a plain Number(): projectParamsSchema's pattern caps id at 15
+      // Safe as a plain Number(): idParamSchema's pattern caps id at 15
       // digits, well under Number.MAX_SAFE_INTEGER, and the id column is a
       // bigserial declared with `mode: 'number'` — so this is the conversion
       // Drizzle expects, not a precision-losing shortcut.
@@ -134,13 +122,13 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
 
   app.patch<{
     Body: UpdateProjectBody;
-    Params: ProjectParams;
+    Params: IdParams;
   }>(
     '/projects/:id',
     {
       schema: {
         body: updateProjectBodySchema,
-        params: projectParamsSchema,
+        params: idParamSchema,
       },
     },
     async (request, reply) => {
@@ -169,9 +157,9 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  app.delete<{ Params: ProjectParams }>(
+  app.delete<{ Params: IdParams }>(
     '/projects/:id',
-    { schema: { params: projectParamsSchema } },
+    { schema: { params: idParamSchema } },
     async (request, reply) => {
       const id = Number(request.params.id);
 
