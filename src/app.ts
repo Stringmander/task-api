@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { registerStubAuth } from './plugins/stub-auth.js';
 import { projectRoutes } from './routes/projects.js';
+import { taskRoutes } from './routes/tasks.js';
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({
@@ -20,6 +21,7 @@ export function buildApp(): FastifyInstance {
   });
 
   void app.register(projectRoutes);
+  void app.register(taskRoutes);
 
   return app;
 }
