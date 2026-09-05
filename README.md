@@ -7,8 +7,6 @@ scoped to the authenticated user at every layer.
 Built as a portfolio project: complete, tested, containerized, and
 documented end-to-end.
 
-<!-- TODO(Claude): update name/title if repo name differs -->
-
 ## Tech Stack
 
 | Layer      | Choice                                                      |
@@ -32,9 +30,6 @@ documented end-to-end.
 - Git
 
 ## Getting Started
-
-<!-- TODO(Claude): verify script names against package.json and
-     update any that differ -->
 
 ```
 # Clone
@@ -62,11 +57,11 @@ The API listens on `http://localhost:3000` (confirm `PORT` in `.env`). Verify wi
 
 An [OpenCollection](https://www.opencollection.com) request collection covering every endpoint lives in [`http/`](/http/) — executable API requests in an open, tool-agnostic YAML format, importable by [Bruno](https://www.usebruno.com) (and Postman, Insomnia, or any OpenCollection-compatible client).
 
-The collection is organized as a walkthrough: setup requests capture created ids into variables (`{{projectId}}`, `{{taskId}}`), so the whole chain re-runs cleanly after a database reset. Error-path requests use deliberately-invalid values by design.
+The collection is organized as a walkthrough: create a project or task, then copy its returned `id` into the path param of the next request in the chain (e.g. `create-task.yml`'s `id` param). Error-path requests use deliberately-invalid values by design.
+
+Requests are grouped into `projects/` and `tasks/` folders matching the route groups above, with filenames following a `verb-noun[-modifier].yml` convention (e.g. `create-project.yml`, `create-project-name-too-long.yml`). An `http/environments/local.yml` environment (named `Local`) provides `{{baseUrl}}`; select it in your client before running any request.
 
 Sensitive values (auth tokens from Phase 3 onward) belong in secret environment variables, never in committed files.
-
-<!-- TODO(Claude): verify request filenames against the actual collection contents and correct this section if needed -->
 
 ## API Endpoints
 
@@ -112,7 +107,10 @@ Deleting a project cascades to its tasks at the database level (foreign key `ON 
 
 Three tables: `users`, `projects`, `tasks` (plus Drizzle's migration bookkeeping). Schema changes are managed exclusively through committed SQL migrations:
 
-`npm run db:generate # emit a migration from src/db/schema.ts changes npm run db:migrate # apply pending migrations`
+```
+npm run db:generate  # emit a migration from src/db/schema.ts changes
+npm run db:migrate   # apply pending migrations
+```
 
 The `drizzle-kit push` shortcut is intentionally not used; the migration history in `drizzle/` is the reproducible path from a clean clone to the current schema.
 
@@ -136,9 +134,20 @@ Local development uses Docker Compose for PostgreSQL only; the API runs on the h
 
 ## Project Structure
 
-<!-- TODO(Claude): flesh out from the actual tree; verify each path exists before listing it -->
-
-`src/ ├── routes/ # route definitions (projects, tasks) ├── lib/ # shared logic (ownership checks) ├── db/ # Drizzle schema and client setup └── ... # server bootstrap drizzle/ # committed SQL migrations http/ # OpenCollection request collection (Bruno et al.) docs/ # build plan, route pattern guide .claude/ # AI-assistant workflow commands`
+```
+src/
+├── app.ts        # builds the Fastify instance, registers plugins and routes
+├── server.ts     # process entrypoint — starts listening
+├── env.ts        # loads and validates environment variables
+├── routes/       # route definitions (projects, tasks)
+├── lib/          # shared logic (ownership checks, id param schema, error shaping)
+├── db/           # Drizzle schema, client, and migration runner
+└── plugins/      # stub auth — temporary Phase 2 request.user, replaced in Phase 3
+drizzle/          # committed SQL migrations + drizzle-kit snapshot metadata
+http/             # OpenCollection request collection (Bruno et al.)
+docs/             # build plan, route pattern guide
+.claude/          # AI-assistant workflow commands
+```
 
 ## Conventions
 
