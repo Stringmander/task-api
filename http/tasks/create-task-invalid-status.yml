@@ -1,0 +1,27 @@
+info:
+  name: create-task-invalid-status
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/projects/:id/tasks"
+  params:
+    - name: id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Bad status task",
+        "status": "archived"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

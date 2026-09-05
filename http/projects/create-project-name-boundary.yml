@@ -1,0 +1,23 @@
+info:
+  name: create-project-name-boundary
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/projects"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "description": "boundary test: 100 characters"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

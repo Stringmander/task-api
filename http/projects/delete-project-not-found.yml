@@ -1,0 +1,20 @@
+info:
+  name: delete-project-not-found
+  type: http
+  seq: 12
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/projects/:id"
+  params:
+    - name: id
+      value: "65535"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

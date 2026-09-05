@@ -1,0 +1,26 @@
+info:
+  name: update-project-description
+  type: http
+  seq: 9
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/projects/:id"
+  params:
+    - name: id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "description": "Updated description only; name should survive untouched"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

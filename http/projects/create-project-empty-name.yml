@@ -1,0 +1,23 @@
+info:
+  name: create-project-empty-name
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/projects"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "",
+        "description": "should fail on empty name"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

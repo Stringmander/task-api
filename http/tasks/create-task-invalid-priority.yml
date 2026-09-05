@@ -1,0 +1,27 @@
+info:
+  name: create-task-invalid-priority
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/projects/:id/tasks"
+  params:
+    - name: id
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Bad priority task",
+        "priority": "urgent"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

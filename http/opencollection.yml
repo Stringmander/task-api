@@ -1,0 +1,9 @@
+opencollection: 1.0.0
+
+info:
+  name: Task API
+  version: "1.0.0"
+config:
+  proxy:
+    inherit: true
+bundled: false

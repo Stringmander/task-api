@@ -1,0 +1,4 @@
+name: Local
+variables:
+  - name: baseUrl
+    value: localhost:3000
