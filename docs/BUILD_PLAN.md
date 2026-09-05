@@ -21,6 +21,7 @@ budget 22-25 hours across five phases.
 | Test approach | Real Postgres in Docker, ~28 tests | Integration credibility over mocked units |
 | Containers | Multi-stage Dockerfile, 2-service compose, healthcheck gating | Boring and correct |
 | CI | GitHub Actions: test job (postgres service + vitest) + lint job | Badge credibility |
+| API docs | OpenAPI spec generated from route schemas via @fastify/swagger (Phase 5); Bruno/OpenCollection request collection committed under http/ for manual testing | Spec is derived from code, not hand-maintained; collection preserves the executable verification workflow |
 
 ## Domain Model
 
@@ -93,7 +94,8 @@ Target: green suite of ~28 tests against real Postgres.
 ### Phase 5 - Docker + CI + docs (~3-4h)
 Multi-stage Dockerfile (non-root runtime), docker-compose with
 healthcheck, GitHub Actions (test + lint jobs), README with badges,
-setup steps, endpoint reference, Bruno collection committed.
+setup steps, endpoint reference, OpenAPI spec via @fastify/swagger,
+Bruno/OpenCollection request collection committed under http/.
 
 ## Session Rules
 
