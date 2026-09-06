@@ -22,6 +22,7 @@ budget 22-25 hours across five phases.
 | Containers | Multi-stage Dockerfile, 2-service compose, healthcheck gating | Boring and correct |
 | CI | GitHub Actions: test job (postgres service + vitest) + lint job | Badge credibility |
 | API docs | OpenAPI spec generated from route schemas via @fastify/swagger (Phase 5); Bruno/OpenCollection request collection committed under http/ for manual testing | Spec is derived from code, not hand-maintained; collection preserves the executable verification workflow |
+| Input validation | Strict; Ajv coerceTypes disabled | Unexpected input types get loud 400s; leniency must be declared, never implicit |
 
 ## Domain Model
 
@@ -73,19 +74,22 @@ Isolation: truncate tables before each test file; fixtures per suite.
 ## Phases
 
 ### Phase 1 - Scaffold + schema + migrations (~3-4h)
-Repo init, .nvmrc, strict tsconfig, ESLint, Fastify skeleton with
-/health, Drizzle schema, drizzle-kit generate, verify via pgcli.
-Commits: chore(init), feat(server skeleton), feat(schema), feat(migrations).
+Status: COMPLETE, verified 2026-09-01
 
 ### Phase 2 - CRUD routes + validation (~5-6h)
-Projects routes, tasks routes, ownership scoping (403 logic),
-JSON Schema validation on all inputs. No auth yet; a temporary
-request.user stub is acceptable and removed in Phase 3.
+Status: COMPLETE and verified 2026-09-04. Routes written via
+guided practice against docs/ROUTE_PATTERN.md.
 
 ### Phase 3 - Auth (~4-5h)
 Register + bcryptjs(12), login issuing jose token pair
 (payload: sub/iat/exp), refresh rotation with SHA-256 hashed
 storage in refresh_tokens table, fail-closed preHandler hook.
+
+Sub-task (added 2026-09-06): upgrade http/ collection to scripted
+variable capture — login captures accessToken into a secret,
+uncommitted environment; create-project/create-task capture
+{{projectId}}/{{taskId}}. Replaces the manual id threading
+documented in the README.
 
 ### Phase 4 - Test suite (~6-7h)
 Suites in order: auth, authorization, projects, tasks, integration.
