@@ -31,9 +31,9 @@ documented end-to-end.
 
 ## Getting Started
 
-```
+```bash
 # Clone
-git clone <repo-url> task-api
+git clone https://github.com/Stringmander/task-api.git task-api
 cd task-api
 
 # Install dependencies (Node version switches automatically with fnm)
@@ -107,7 +107,7 @@ Deleting a project cascades to its tasks at the database level (foreign key `ON 
 
 Three tables: `users`, `projects`, `tasks` (plus Drizzle's migration bookkeeping). Schema changes are managed exclusively through committed SQL migrations:
 
-```
+```bash
 npm run db:generate  # emit a migration from src/db/schema.ts changes
 npm run db:migrate   # apply pending migrations
 ```
