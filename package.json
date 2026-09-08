@@ -16,8 +16,9 @@
     "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
-    "fastify": "^5.12.1",
+    "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",
+    "fastify": "^5.12.1",
     "pg": "^8.23.0"
   },
   "devDependencies": {
