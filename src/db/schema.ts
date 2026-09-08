@@ -20,6 +20,21 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Rotation (CLAUDE.md's Auth Contract) means each refresh exchanges the
+// presented token for a new row and invalidates this one — old tokens are
+// deleted, not flagged, so this table only ever holds tokens that are still
+// live. Only the hash is stored: the raw refresh token exists solely in the
+// client's hands, so a leaked database dump can't be replayed as a session.
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  userId: bigint('user_id', { mode: 'number' })
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull().unique(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const projects = pgTable('projects', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   userId: bigint('user_id', { mode: 'number' })

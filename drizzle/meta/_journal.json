@@ -8,6 +8,13 @@
       "when": 1788286115317,
       "tag": "0000_regular_rick_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788888791097,
+      "tag": "0001_organic_magus",
+      "breakpoints": true
     }
   ]
 }
