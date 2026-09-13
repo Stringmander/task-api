@@ -15,4 +15,6 @@ function required(name: string): string {
 export const env = {
   databaseUrl: required('DATABASE_URL'),
   port: Number(process.env['PORT'] ?? 3000),
+  jwtSecret: required('JWT_SECRET'),
+  jwtSecretKey: new TextEncoder().encode(required('JWT_SECRET')),
 };

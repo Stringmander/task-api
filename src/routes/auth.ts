@@ -1,8 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import bcrypt from 'bcryptjs';
+import { eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { users } from '../db/schema.js';
+import { refreshTokens, users } from '../db/schema.js';
 import { sendError } from '../lib/http-errors.js';
+import { hashToken, signAccessToken, signRefreshToken, verifyPassword } from '../lib/tokens.js';
 
 // additionalProperties: false blocks a client from smuggling in fields like
 // passwordHash or id — same reasoning as every other body schema in this
@@ -25,9 +27,22 @@ const registerBodySchema = {
   },
 } as const;
 
-interface RegisterBody {
+const loginBodySchema = {
+  type: 'object',
+  required: ['email', 'password'],
+  additionalProperties: false,
+  properties: {
+    email: { type: 'string', format: 'email', maxLength: 255 },
+    password: { type: 'string', minLength: 8, maxLength: 72 },
+  },
+} as const;
+
+interface LoginBody {
   email: string;
   password: string;
+}
+
+interface RegisterBody extends LoginBody {
   displayName: string;
 }
 
@@ -36,7 +51,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     '/auth/register',
     { schema: { body: registerBodySchema } },
     async (request, reply) => {
-      const { email, password, displayName } = request.body;
+      const { password, displayName } = request.body;
+      const email = request.body.email.toLowerCase();
 
       // Cost factor 12 per CLAUDE.md's Auth Contract: this is bcrypt's work
       // factor (each increment roughly doubles the hashing time), not a
@@ -80,6 +96,36 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
         throw err;
       }
+    },
+  );
+
+  app.post<{ Body: LoginBody }>(
+    '/auth/login',
+    { schema: { body: loginBodySchema } },
+    async (request, reply) => {
+      const email = request.body.email.toLowerCase();
+
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+      const passwordValid = await verifyPassword(request.body.password, user?.passwordHash);
+
+      if (!user || !passwordValid) {
+        return sendError(reply, 401, 'Incorrect email/password');
+      }
+
+      const accessToken = await signAccessToken(user.id);
+      const refreshToken = await signRefreshToken(user.id);
+      const tokenHash = hashToken(refreshToken.token);
+
+      await db.insert(refreshTokens).values({
+        userId: user.id,
+        tokenHash,
+        expiresAt: refreshToken.expiresAt,
+      });
+
+      reply.code(200).send({
+        accessToken,
+        refreshToken: refreshToken.token,
+      });
     },
   );
 }
