@@ -40,6 +40,17 @@ const loginBodySchema = {
   },
 } as const;
 
+//  A refresh token's shape is a jose-signed JWT — three base64url segments
+// separated by dots (header.payload.signature). That's checkable with a regex
+// pattern — it rejects obviously-garbage input (empty string, random text, a
+// truncated copy-paste) with a clean 400 before the request even reaches
+// jwtVerify. The maxLength of 2048 is a generous defensive cap, not tied to
+// any cryptographic fact like the password field's 72-byte bcrypt limit. A
+// real token here (minimal sub/iat/exp payload, HS256) is nowhere near this
+// size; it just stops something absurdly oversized from being handed to
+// jwtVerify at all. Additionally, minLength is unnecssary — the pattern
+// already requires at least one character per segment, so an empty or
+// near-empty string can't match it anyway.
 const refreshBodySchema = {
   type: 'object',
   required: ['refreshToken'],
