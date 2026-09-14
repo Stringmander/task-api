@@ -1,10 +1,13 @@
 import type { FastifyInstance } from 'fastify';
+import type { JWTVerifyResult } from 'jose';
 import bcrypt from 'bcryptjs';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { refreshTokens, users } from '../db/schema.js';
 import { sendError } from '../lib/http-errors.js';
 import { hashToken, signAccessToken, signRefreshToken, verifyPassword } from '../lib/tokens.js';
+import { jwtVerify } from 'jose';
+import { env } from '../env.js';
 
 // additionalProperties: false blocks a client from smuggling in fields like
 // passwordHash or id — same reasoning as every other body schema in this
@@ -37,6 +40,19 @@ const loginBodySchema = {
   },
 } as const;
 
+const refreshBodySchema = {
+  type: 'object',
+  required: ['refreshToken'],
+  additionalProperties: false,
+  properties: {
+    refreshToken: {
+      type: 'string',
+      pattern: '^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$',
+      maxLength: 2048,
+    },
+  },
+} as const;
+
 interface LoginBody {
   email: string;
   password: string;
@@ -44,6 +60,10 @@ interface LoginBody {
 
 interface RegisterBody extends LoginBody {
   displayName: string;
+}
+
+interface RefreshBody {
+  refreshToken: string;
 }
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
@@ -124,6 +144,66 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
       await db.insert(refreshTokens).values({
         userId: user.id,
+        tokenHash,
+        expiresAt: refreshToken.expiresAt,
+      });
+
+      reply.code(200).send({
+        accessToken,
+        refreshToken: refreshToken.token,
+      });
+    },
+  );
+
+  app.post<{ Body: RefreshBody }>(
+    '/auth/refresh',
+    { schema: { body: refreshBodySchema } },
+    async (request, reply) => {
+      const requestRefreshToken = request.body.refreshToken;
+
+      let result: JWTVerifyResult;
+      try {
+        result = await jwtVerify(requestRefreshToken, env.jwtSecretKey);
+      } catch {
+        return sendError(reply, 401, 'Invalid or expired refresh token');
+      }
+
+      const userId = Number(result.payload.sub);
+      const requestTokenHash = hashToken(requestRefreshToken);
+
+      // Delete-then-check via .returning(), not a SELECT followed by a
+      // separate DELETE: this makes "does the token still exist" and
+      // "make sure it can't be used again" one atomic statement instead of
+      // two, which is what actually closes the reuse race. If two
+      // /auth/refresh requests present the same still-valid-looking token
+      // at nearly the same time, Postgres only lets one of the deletes
+      // match and return a row — the other gets nothing back, even though
+      // both tokens passed jwtVerify. A SELECT to check existence, followed
+      // later by a DELETE, would leave a gap between those two steps for
+      // both requests to slip through.
+      const [deleted] = await db
+        .delete(refreshTokens)
+        // Filtering by both userId and tokenHash isn't redundant, even though
+        // tokenHash alone is already .unique(). Here, userId comes from the
+        // JWT's verified sub claim (trustworthy — jwtVerify already confirmed
+        // the signature), and requiring the DB row to agree with what the token
+        // itself claims is a real consistency check, not decoration. If a hash
+        // ever matched a row belonging to a different user than the token
+        // claims, this correctly treats that as "not found" rather than trusting
+        // the hash match alone.
+        .where(and(eq(refreshTokens.userId, userId), eq(refreshTokens.tokenHash, requestTokenHash)))
+        .returning();
+
+      if (!deleted) {
+        return sendError(reply, 401, 'Invalid or expired refresh token');
+      }
+
+      const accessToken = await signAccessToken(userId);
+      const refreshToken = await signRefreshToken(userId);
+      const tokenHash = hashToken(refreshToken.token);
+
+      await db.insert(refreshTokens).values({
+        userId,
         tokenHash,
         expiresAt: refreshToken.expiresAt,
       });
