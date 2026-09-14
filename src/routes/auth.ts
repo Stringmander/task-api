@@ -106,6 +106,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const email = request.body.email.toLowerCase();
 
       const [user] = await db.select().from(users).where(eq(users.email, email));
+      // Awaited here, before the guard clause below, not inside it: bcrypt's
+      // cost-12 comparison (see verifyPassword in lib/tokens.ts) always takes
+      // the same ~300ms whether `user` was found or not. Skipping it when
+      // `user` is missing would let that request return faster than a
+      // wrong-password one — a timing side channel that leaks which emails
+      // are registered even though both cases send an identical 401 below.
       const passwordValid = await verifyPassword(request.body.password, user?.passwordHash);
 
       if (!user || !passwordValid) {

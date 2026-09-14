@@ -15,6 +15,11 @@ export async function signAccessToken(userId: number): Promise<string> {
     .sign(env.jwtSecretKey);
 }
 
+// Returns expiresAt alongside the token — unlike signAccessToken, which only
+// returns a string — because the caller needs that exact expiry for the
+// refreshTokens row, not for the response (only `token` ever reaches the
+// client). Computing it once here and reusing it for both the signature's
+// exp claim and the DB column is what keeps the two from drifting apart.
 export async function signRefreshToken(
   userId: number,
 ): Promise<{ token: string; expiresAt: Date }> {
@@ -34,6 +39,10 @@ export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
+// Falls back to DUMMY_HASH instead of accepting `hash: undefined` as an
+// automatic failure, so this always performs a real bcrypt.compare — see the
+// call site in auth.ts's login route for why that matters (a skipped
+// comparison is what turns response time into a way to enumerate accounts).
 export async function verifyPassword(password: string, hash: string | undefined): Promise<boolean> {
   return bcrypt.compare(password, hash ?? DUMMY_HASH);
 }
