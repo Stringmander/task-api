@@ -40,7 +40,7 @@ const loginBodySchema = {
   },
 } as const;
 
-//  A refresh token's shape is a jose-signed JWT — three base64url segments
+// A refresh token's shape is a jose-signed JWT — three base64url segments
 // separated by dots (header.payload.signature). That's checkable with a regex
 // pattern — it rejects obviously-garbage input (empty string, random text, a
 // truncated copy-paste) with a clean 400 before the request even reaches
