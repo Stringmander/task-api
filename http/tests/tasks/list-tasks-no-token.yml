@@ -1,23 +1,15 @@
 info:
-  name: create-task-invalid-priority
+  name: list-tasks-no-token
   type: http
-  seq: 5
+  seq: 1
 
 http:
-  method: POST
+  method: GET
   url: "{{baseUrl}}/projects/:id/tasks"
   params:
     - name: id
       value: "{{projectId}}"
       type: path
-  body:
-    type: json
-    data: |-
-      {
-        "title": "Bad priority task",
-        "priority": "urgent"
-      }
-  auth: inherit
 
 settings:
   encodeUrl: true

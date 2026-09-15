@@ -1,7 +1,7 @@
 info:
   name: update-project-description
   type: http
-  seq: 9
+  seq: 7
 
 http:
   method: PATCH

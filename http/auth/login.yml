@@ -20,6 +20,7 @@ runtime:
       code: |-
         bru.setVar("accessToken", res.body.accessToken);
         bru.setVar("refreshToken", res.body.refreshToken);
+        bru.setVar("originalRefreshToken", res.body.refreshToken);
 
 settings:
   encodeUrl: true

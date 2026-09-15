@@ -1,22 +1,19 @@
 info:
-  name: update-task-status
+  name: register-invalid-email
   type: http
-  seq: 4
+  seq: 2
 
 http:
-  method: PATCH
-  url: "{{baseUrl}}/tasks/:id"
-  params:
-    - name: id
-      value: "{{taskId}}"
-      type: path
+  method: POST
+  url: "{{baseUrl}}/auth/register"
   body:
     type: json
     data: |-
       {
-        "status": "done"
+        "email": "invalidemail",
+        "password": "correcthorse",
+        "displayName": "Demo User"
       }
-  auth: inherit
 
 settings:
   encodeUrl: true

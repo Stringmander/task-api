@@ -1,7 +1,7 @@
 info:
   name: update-task-priority
   type: http
-  seq: 8
+  seq: 5
 
 http:
   method: PATCH

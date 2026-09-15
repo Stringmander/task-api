@@ -1,15 +1,21 @@
 info:
-  name: delete-project-not-found
+  name: update-project-invalid-type
   type: http
-  seq: 12
+  seq: 8
 
 http:
-  method: DELETE
+  method: PATCH
   url: "{{baseUrl}}/projects/:id"
   params:
     - name: id
-      value: "65535"
+      value: "{{projectId}}"
       type: path
+  body:
+    type: json
+    data: |-
+      {
+        "name": 12345
+      }
   auth: inherit
 
 settings:

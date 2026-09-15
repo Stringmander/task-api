@@ -1,7 +1,7 @@
 info:
   name: create-project-name-too-long
   type: http
-  seq: 7
+  seq: 6
 
 http:
   method: POST

@@ -1,7 +1,7 @@
 info:
   name: update-task-multiple-fields
   type: http
-  seq: 9
+  seq: 6
 
 http:
   method: PATCH

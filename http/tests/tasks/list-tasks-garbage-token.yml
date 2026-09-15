@@ -1,16 +1,18 @@
 info:
-  name: delete-task
+  name: list-tasks-garbage-token
   type: http
-  seq: 7
+  seq: 2
 
 http:
-  method: DELETE
-  url: "{{baseUrl}}/tasks/:id"
+  method: GET
+  url: "{{baseUrl}}/projects/:id/tasks"
   params:
     - name: id
-      value: "{{taskId}}"
+      value: "{{projectId}}"
       type: path
-  auth: inherit
+  auth:
+    type: bearer
+    token: garbagetoken
 
 settings:
   encodeUrl: true

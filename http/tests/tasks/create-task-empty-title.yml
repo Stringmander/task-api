@@ -1,23 +1,22 @@
 info:
-  name: create-project-minimal
+  name: create-task-empty-title
   type: http
   seq: 4
 
 http:
   method: POST
-  url: "{{baseUrl}}/projects"
+  url: "{{baseUrl}}/projects/:id/tasks"
+  params:
+    - name: id
+      value: "{{projectId}}"
+      type: path
   body:
     type: json
     data: |-
       {
-        "name": "Minimal Project"
+        "title": ""
       }
   auth: inherit
-
-runtime:
-  scripts:
-    - type: after-response
-      code: bru.setVar("minimalProjectId", res.body.id);
 
 settings:
   encodeUrl: true

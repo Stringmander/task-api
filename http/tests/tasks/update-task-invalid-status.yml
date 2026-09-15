@@ -1,7 +1,7 @@
 info:
-  name: update-task-status
+  name: update-task-invalid-status
   type: http
-  seq: 4
+  seq: 7
 
 http:
   method: PATCH
@@ -14,7 +14,7 @@ http:
     type: json
     data: |-
       {
-        "status": "done"
+        "status": "cancelled"
       }
   auth: inherit
 

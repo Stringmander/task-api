@@ -1,11 +1,11 @@
 info:
-  name: update-project-invalid-type
+  name: create-task-invalid-priority
   type: http
-  seq: 10
+  seq: 4
 
 http:
-  method: PATCH
-  url: "{{baseUrl}}/projects/:id"
+  method: POST
+  url: "{{baseUrl}}/projects/:id/tasks"
   params:
     - name: id
       value: "{{projectId}}"
@@ -14,7 +14,8 @@ http:
     type: json
     data: |-
       {
-        "name": 12345
+        "title": "Bad priority task",
+        "priority": "urgent"
       }
   auth: inherit
 

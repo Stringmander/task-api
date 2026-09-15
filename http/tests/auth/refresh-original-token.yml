@@ -1,22 +1,17 @@
 info:
-  name: update-task-status
+  name: refresh-original-token
   type: http
-  seq: 4
+  seq: 5
 
 http:
-  method: PATCH
-  url: "{{baseUrl}}/tasks/:id"
-  params:
-    - name: id
-      value: "{{taskId}}"
-      type: path
+  method: POST
+  url: "{{baseUrl}}/auth/refresh"
   body:
     type: json
     data: |-
       {
-        "status": "done"
+        "refreshToken": "{{originalRefreshToken}}"
       }
-  auth: inherit
 
 settings:
   encodeUrl: true

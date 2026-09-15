@@ -1,21 +1,15 @@
 info:
-  name: update-task-invalid-status
+  name: delete-project-not-found
   type: http
-  seq: 10
+  seq: 8
 
 http:
-  method: PATCH
-  url: "{{baseUrl}}/tasks/:id"
+  method: DELETE
+  url: "{{baseUrl}}/projects/:id"
   params:
     - name: id
-      value: "{{taskId}}"
+      value: "65535"
       type: path
-  body:
-    type: json
-    data: |-
-      {
-        "status": "cancelled"
-      }
   auth: inherit
 
 settings:

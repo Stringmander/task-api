@@ -18,8 +18,7 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: |-
-        bru.setVar("projectId", res.body.id);
+      code: bru.setVar("projectId", res.body.id);
 
 settings:
   encodeUrl: true
