@@ -1,25 +1,25 @@
 info:
-  name: create-project
+  name: login
   type: http
   seq: 2
 
 http:
   method: POST
-  url: "{{baseUrl}}/projects"
+  url: "{{baseUrl}}/auth/login"
   body:
     type: json
     data: |-
       {
-        "name": "Portfolio Project",
-        "description": "Node.js task API for the career pivot"
+        "email": "demo@example.com",
+        "password": "correcthorse"
       }
-  auth: inherit
 
 runtime:
   scripts:
     - type: after-response
       code: |-
-        bru.setVar("projectId", res.body.id);
+        bru.setVar("accessToken", res.body.accessToken);
+        bru.setVar("refreshToken", res.body.refreshToken);
 
 settings:
   encodeUrl: true

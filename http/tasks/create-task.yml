@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/projects/:id/tasks"
   params:
     - name: id
-      value: "1"
+      value: "{{projectId}}"
       type: path
   body:
     type: json
@@ -18,10 +18,16 @@ http:
         "description": "JWT verification preHandler for protected routes",
         "status": "in_progress",
         "priority": "high",
-        "due_date": "2026-09-15",
+        "dueDate": "2026-09-15",
         "position": 1
       }
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        bru.setVar("taskId", res.body.id);
 
 settings:
   encodeUrl: true

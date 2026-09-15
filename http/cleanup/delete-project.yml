@@ -1,14 +1,14 @@
 info:
   name: delete-project
   type: http
-  seq: 11
+  seq: 1
 
 http:
   method: DELETE
   url: "{{baseUrl}}/projects/:id"
   params:
     - name: id
-      value: "1"
+      value: "{{projectId}}"
       type: path
   auth: inherit
 

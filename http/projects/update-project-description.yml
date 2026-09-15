@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/projects/:id"
   params:
     - name: id
-      value: "1"
+      value: "{{projectId}}"
       type: path
   body:
     type: json

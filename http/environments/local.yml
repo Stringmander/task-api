@@ -2,3 +2,9 @@ name: Local
 variables:
   - name: baseUrl
     value: localhost:3000
+  - name: accessToken
+    secret: true
+    type: string
+  - name: refreshToken
+    secret: true
+    type: string

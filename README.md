@@ -57,11 +57,11 @@ The API listens on `http://localhost:3000` (confirm `PORT` in `.env`). Verify wi
 
 An [OpenCollection](https://www.opencollection.com) request collection covering every endpoint lives in [`http/`](/http/) — executable API requests in an open, tool-agnostic YAML format, importable by [Bruno](https://www.usebruno.com) (and Postman, Insomnia, or any OpenCollection-compatible client).
 
-The collection is organized as a walkthrough: create a project or task, then copy its returned `id` into the path param of the next request in the chain (e.g. `create-task.yml`'s `id` param). Error-path requests use deliberately-invalid values by design.
+The collection is organized as a walkthrough with no manual copy-pasting: `login`'s response script captures `accessToken`/`refreshToken`, `create-project`/`create-task`'s capture `projectId`/`taskId` — every later request in the chain references those as `{{variables}}` instead of a hardcoded id. Run `auth/` → `projects/` → `tasks/` → `cleanup/` in order (or the whole collection recursively) and it re-runs cleanly end to end. Error-path requests use deliberately-invalid values by design.
 
-Requests are grouped into `projects/` and `tasks/` folders matching the route groups above, with filenames following a `verb-noun[-modifier].yml` convention (e.g. `create-project.yml`, `create-project-name-too-long.yml`). An `http/environments/local.yml` environment (named `Local`) provides `{{baseUrl}}`; select it in your client before running any request.
+Requests are grouped into `auth/`, `projects/`, `tasks/`, and `cleanup/` folders matching the route groups above (`cleanup/` holds `delete-project` specifically, run last since deleting the walkthrough's project would otherwise break every `tasks/` request that depends on it still existing), with filenames following a `verb-noun[-modifier].yml` convention (e.g. `create-project.yml`, `create-project-name-too-long.yml`). An `http/environments/local.yml` environment (named `Local`) provides `{{baseUrl}}`; select it in your client before running any request.
 
-Sensitive values (auth tokens from Phase 3 onward) belong in secret environment variables, never in committed files.
+`accessToken` and `refreshToken` are declared as secret variables in that same environment file — the declaration is safe to commit (it's just a name and a type), but the actual value is never written to any file; Bruno stores it locally, encrypted, and `login`/`refresh`'s scripts populate it fresh on each run.
 
 ## API Endpoints
 
@@ -139,10 +139,10 @@ src/
 ├── app.ts        # builds the Fastify instance, registers plugins and routes
 ├── server.ts     # process entrypoint — starts listening
 ├── env.ts        # loads and validates environment variables
-├── routes/       # route definitions (projects, tasks)
-├── lib/          # shared logic (ownership checks, id param schema, error shaping)
+├── routes/       # route definitions (auth, projects, tasks)
+├── lib/          # shared logic (ownership checks, id param schema, error shaping, tokens)
 ├── db/           # Drizzle schema, client, and migration runner
-└── plugins/      # stub auth — temporary Phase 2 request.user, replaced in Phase 3
+└── plugins/      # Bearer-token preHandler — verifies access tokens, sets request.user
 drizzle/          # committed SQL migrations + drizzle-kit snapshot metadata
 http/             # OpenCollection request collection (Bruno et al.)
 docs/             # build plan, route pattern guide

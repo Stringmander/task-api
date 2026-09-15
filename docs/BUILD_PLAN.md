@@ -85,11 +85,19 @@ Register + bcryptjs(12), login issuing jose token pair
 (payload: sub/iat/exp), refresh rotation with SHA-256 hashed
 storage in refresh_tokens table, fail-closed preHandler hook.
 
-Sub-task (added 2026-09-06): upgrade http/ collection to scripted
-variable capture — login captures accessToken into a secret,
-uncommitted environment; create-project/create-task capture
-{{projectId}}/{{taskId}}. Replaces the manual id threading
-documented in the README.
+Sub-task (added 2026-09-06, done 2026-09-15): upgraded http/
+collection to scripted variable capture — login/refresh capture
+accessToken/refreshToken as secret variables (declared in
+http/environments/local.yml; the declaration is safe to commit,
+the value never is - Bruno stores it locally); create-project/
+create-task capture {{projectId}}/{{taskId}}. Replaces the manual
+id threading previously documented in the README. Also added an
+auth/ folder (register/login/refresh) and moved delete-project into
+a new cleanup/ folder that runs after tasks/ - deleting the
+walkthrough's project before the tasks/ folder runs would otherwise
+break every task request that depends on it still existing.
+Verified via `bru run -r --env local` end to end: all 26 requests
+return exactly the status code each is designed to test.
 
 ### Phase 4 - Test suite (~6-7h)
 Suites in order: auth, authorization, projects, tasks, integration.

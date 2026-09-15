@@ -1,7 +1,7 @@
 info:
-  name: /tasks
+  name: /auth
   type: folder
-  seq: 3
+  seq: 1
 
 request:
   auth: inherit

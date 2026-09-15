@@ -6,4 +6,8 @@ info:
 config:
   proxy:
     inherit: true
+request:
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
 bundled: false
