@@ -15,6 +15,11 @@ http:
       }
   auth: inherit
 
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("boundaryProjectId", res.body.id);
+
 settings:
   encodeUrl: true
   timeout: 0
