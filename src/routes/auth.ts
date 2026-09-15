@@ -80,7 +80,7 @@ interface RefreshBody {
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: RegisterBody }>(
     '/auth/register',
-    { schema: { body: registerBodySchema } },
+    { schema: { body: registerBodySchema }, config: { public: true } },
     async (request, reply) => {
       const { password, displayName } = request.body;
       const email = request.body.email.toLowerCase();
@@ -132,7 +132,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.post<{ Body: LoginBody }>(
     '/auth/login',
-    { schema: { body: loginBodySchema } },
+    { schema: { body: loginBodySchema }, config: { public: true } },
     async (request, reply) => {
       const email = request.body.email.toLowerCase();
 
@@ -168,7 +168,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.post<{ Body: RefreshBody }>(
     '/auth/refresh',
-    { schema: { body: refreshBodySchema } },
+    { schema: { body: refreshBodySchema }, config: { public: true } },
     async (request, reply) => {
       const requestRefreshToken = request.body.refreshToken;
 
