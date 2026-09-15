@@ -1,6 +1,6 @@
 import { SignJWT } from 'jose';
 import { env } from '../env.js';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 
 // valid cost-12 hash, never a real user's
@@ -28,6 +28,7 @@ export async function signRefreshToken(
   const token = await new SignJWT({})
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(String(userId))
+    .setJti(randomUUID())
     .setIssuedAt()
     .setExpirationTime(expiresAt)
     .sign(env.jwtSecretKey);
