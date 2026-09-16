@@ -81,9 +81,24 @@ Status: COMPLETE and verified 2026-09-04. Routes written via
 guided practice against docs/ROUTE_PATTERN.md.
 
 ### Phase 3 - Auth (~4-5h)
-Register + bcryptjs(12), login issuing jose token pair
-(payload: sub/iat/exp), refresh rotation with SHA-256 hashed
+Register + bcryptjs(12), login issuing jose token pair (access
+payload: sub/iat/exp; refresh payload: sub/jti/iat/exp - jti added
+after the reuse bug below), refresh rotation with SHA-256 hashed
 storage in refresh_tokens table, fail-closed preHandler hook.
+
+Bug found and fixed (2026-09-15/16, `dbd59e8`): signRefreshToken
+originally signed only sub/iat/exp. iat/exp are second-granularity
+and HS256 signing is deterministic, so two refresh tokens issued for
+the same user within the same wall-clock second - trivial to hit
+locally - came out byte-identical, silently defeating
+reuse-rejection: the row rotation inserted had the same token_hash
+as the row it had just deleted. Found via
+http/tests/auth/refresh-original-token.yml returning 200 instead of
+401 in a live collection run, confirmed with raw curl outside Bruno
+before touching any code. Fixed by adding a random jti
+(crypto.randomUUID()) to the refresh token only - access tokens
+aren't DB-tracked or compared for equality anywhere, so they have no
+uniqueness invariant to violate.
 
 Sub-task (added 2026-09-06, done 2026-09-15): upgraded http/
 collection to scripted variable capture — login/refresh capture

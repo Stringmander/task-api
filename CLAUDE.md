@@ -49,8 +49,13 @@ Updates use PATCH (partial update semantics).
 ## Auth Contract
 
 - Access token: 15 min expiry, payload = sub/iat/exp only.
-- Refresh token: 7 days, stored hashed in refresh_tokens table,
-  rotated on every use (old token invalidated at exchange).
+- Refresh token: 7 days, payload = sub/jti/iat/exp. jti is required,
+  not optional like it sounds: HS256 signing is deterministic, and
+  iat/exp alone are second-granularity, so two refresh tokens for the
+  same user issued in the same second would otherwise be byte-identical
+  and silently defeat reuse-rejection (real bug, found 2026-09-15,
+  fixed in dbd59e8). Stored hashed in refresh_tokens table, rotated on
+  every use (old token invalidated at exchange).
 - 401 = unauthenticated, 403 = authenticated but not authorized.
 - Single Fastify preHandler hook verifies Bearer token via jose,
   attaches request.user, fails closed.
