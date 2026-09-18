@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { randomUUID } from 'node:crypto';
 import { decodeJwt } from 'jose';
 import { eq } from 'drizzle-orm';
 import { buildApp } from '../app.js';
@@ -34,11 +35,18 @@ afterAll(async () => {
 // as valid register input is auth-suite-specific test data, not generic
 // test infrastructure. Returns the credentials used so a test can log in
 // with them afterward without repeating the payload.
+//
+// A fresh random email per call, not a fixed one, is what keeps tests
+// independent of each other now that tables reset once per file
+// (src/tests/setup.ts), not before every test — two tests both registering
+// "alice@example.com" would collide (the second gets an unintended 409)
+// purely because of file-level test order, not anything either test is
+// actually checking.
 async function registerTestUser(
   overrides: Partial<{ email: string; password: string; displayName: string }> = {},
 ) {
   const payload = {
-    email: 'alice@example.com',
+    email: `alice-${randomUUID()}@example.com`,
     password: 'correcthorse',
     displayName: 'Alice',
     ...overrides,
@@ -55,24 +63,22 @@ async function loginTestUser() {
 
 describe('POST /auth/register', () => {
   it('201s and returns the created user with no password fields', async () => {
-    const response = await app.inject({
-      method: 'POST',
-      url: '/auth/register',
-      payload: { email: 'alice@example.com', password: 'correcthorse', displayName: 'Alice' },
-    });
+    const payload = { email: `alice-${randomUUID()}@example.com`, password: 'correcthorse', displayName: 'Alice' };
+
+    const response = await app.inject({ method: 'POST', url: '/auth/register', payload });
 
     expect(response.statusCode).toBe(201);
     const body = response.json();
-    expect(body).toMatchObject({ email: 'alice@example.com', displayName: 'Alice' });
+    expect(body).toMatchObject({ email: payload.email, displayName: payload.displayName });
     expect(body.id).toEqual(expect.any(Number));
     expect(body).not.toHaveProperty('password');
     expect(body).not.toHaveProperty('passwordHash');
   });
 
   it('stores the password hashed, never in plaintext', async () => {
-    await registerTestUser();
+    const { email } = await registerTestUser();
 
-    const [row] = await db.select().from(users).where(eq(users.email, 'alice@example.com'));
+    const [row] = await db.select().from(users).where(eq(users.email, email));
 
     expect(row?.passwordHash).toBeDefined();
     expect(row?.passwordHash).not.toBe('correcthorse');
@@ -92,12 +98,12 @@ describe('POST /auth/register', () => {
   });
 
   it('409s on a duplicate email', async () => {
-    await registerTestUser();
+    const { email, password, displayName } = await registerTestUser();
 
     const response = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: 'alice@example.com', password: 'correcthorse', displayName: 'Alice' },
+      payload: { email, password, displayName },
     });
 
     expect(response.statusCode).toBe(409);
