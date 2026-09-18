@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { buildApp } from '../app.js';
 import { db } from '../db/index.js';
 import { users } from '../db/schema.js';
+import { loginTestUser, registerTestUser } from './helpers/auth-fixtures.js';
 
 // app.inject() (Fastify's own testing API, per CLAUDE.md's stack) dispatches
 // a request straight into the route pipeline in-process - real JSON Schema
@@ -31,39 +32,13 @@ afterAll(async () => {
   // there's no single "last file" hook to hang a pool.end() on instead.
 });
 
-// Local to this file rather than a shared helper like resetDb: what counts
-// as valid register input is auth-suite-specific test data, not generic
-// test infrastructure. Returns the credentials used so a test can log in
-// with them afterward without repeating the payload.
-//
-// A fresh random email per call, not a fixed one, is what keeps tests
-// independent of each other now that tables reset once per file
-// (src/tests/setup.ts), not before every test — two tests both registering
-// "alice@example.com" would collide (the second gets an unintended 409)
-// purely because of file-level test order, not anything either test is
-// actually checking.
-async function registerTestUser(
-  overrides: Partial<{ email: string; password: string; displayName: string }> = {},
-) {
-  const payload = {
-    email: `alice-${randomUUID()}@example.com`,
-    password: 'correcthorse',
-    displayName: 'Alice',
-    ...overrides,
-  };
-  await app.inject({ method: 'POST', url: '/auth/register', payload });
-  return payload;
-}
-
-async function loginTestUser() {
-  const { email, password } = await registerTestUser();
-  const response = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password } });
-  return response.json() as { accessToken: string; refreshToken: string };
-}
-
 describe('POST /auth/register', () => {
   it('201s and returns the created user with no password fields', async () => {
-    const payload = { email: `alice-${randomUUID()}@example.com`, password: 'correcthorse', displayName: 'Alice' };
+    const payload = {
+      email: `alice-${randomUUID()}@example.com`,
+      password: 'correcthorse',
+      displayName: 'Alice',
+    };
 
     const response = await app.inject({ method: 'POST', url: '/auth/register', payload });
 
@@ -76,7 +51,7 @@ describe('POST /auth/register', () => {
   });
 
   it('stores the password hashed, never in plaintext', async () => {
-    const { email } = await registerTestUser();
+    const { email } = await registerTestUser(app);
 
     const [row] = await db.select().from(users).where(eq(users.email, email));
 
@@ -98,7 +73,7 @@ describe('POST /auth/register', () => {
   });
 
   it('409s on a duplicate email', async () => {
-    const { email, password, displayName } = await registerTestUser();
+    const { email, password, displayName } = await registerTestUser(app);
 
     const response = await app.inject({
       method: 'POST',
@@ -112,9 +87,13 @@ describe('POST /auth/register', () => {
 
 describe('POST /auth/login', () => {
   it('200s with an access/refresh token pair on correct credentials', async () => {
-    const { email, password } = await registerTestUser();
+    const { email, password } = await registerTestUser(app);
 
-    const response = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password } });
+    const response = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password },
+    });
 
     expect(response.statusCode).toBe(200);
     const body = response.json();
@@ -123,7 +102,7 @@ describe('POST /auth/login', () => {
   });
 
   it('401s identically on an unknown email and a wrong password', async () => {
-    const { email } = await registerTestUser();
+    const { email } = await registerTestUser(app);
 
     const unknownEmail = await app.inject({
       method: 'POST',
@@ -147,7 +126,7 @@ describe('POST /auth/login', () => {
 
 describe('POST /auth/refresh', () => {
   it('200s and rotates to a new token pair', async () => {
-    const { refreshToken } = await loginTestUser();
+    const { refreshToken } = await loginTestUser(app);
 
     const response = await app.inject({
       method: 'POST',
@@ -163,10 +142,18 @@ describe('POST /auth/refresh', () => {
   });
 
   it('rejects reuse of an already-consumed token, even presented again within the same second', async () => {
-    const { refreshToken } = await loginTestUser();
+    const { refreshToken } = await loginTestUser(app);
 
-    const first = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken } });
-    const second = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken } });
+    const first = await app.inject({
+      method: 'POST',
+      url: '/auth/refresh',
+      payload: { refreshToken },
+    });
+    const second = await app.inject({
+      method: 'POST',
+      url: '/auth/refresh',
+      payload: { refreshToken },
+    });
 
     expect(first.statusCode).toBe(200);
     expect(second.statusCode).toBe(401);
@@ -183,7 +170,9 @@ describe('POST /auth/refresh', () => {
     // rather than assumed, by checking the original token and the token
     // that replaced it share the same iat.
     const firstIssuedAt = decodeJwt(refreshToken).iat;
-    const replacementIssuedAt = decodeJwt((first.json() as { refreshToken: string }).refreshToken).iat;
+    const replacementIssuedAt = decodeJwt(
+      (first.json() as { refreshToken: string }).refreshToken,
+    ).iat;
     expect(replacementIssuedAt).toBe(firstIssuedAt);
   });
 });

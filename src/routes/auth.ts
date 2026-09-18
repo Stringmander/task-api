@@ -64,12 +64,12 @@ const refreshBodySchema = {
   },
 } as const;
 
-interface LoginBody {
+export interface LoginBody {
   email: string;
   password: string;
 }
 
-interface RegisterBody extends LoginBody {
+export interface RegisterBody extends LoginBody {
   displayName: string;
 }
 
