@@ -1,12 +1,33 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
-import { decodeJwt } from 'jose';
+import { decodeJwt, SignJWT } from 'jose';
 import { eq } from 'drizzle-orm';
 import { buildApp } from '../app.js';
 import { db } from '../db/index.js';
 import { users } from '../db/schema.js';
+import { env } from '../env.js';
 import { loginTestUser, registerTestUser } from './helpers/auth-fixtures.js';
+
+// Signs a token exactly like signRefreshToken (src/lib/tokens.ts) would,
+// except with exp already in the past - the one thing that can't be tested
+// from the http/ collection (see refresh-garbage-token.yml there for the
+// client-testable half of this), since forging a *validly signed* expired
+// token needs the real JWT_SECRET, which a client-side artifact shouldn't
+// hold. A Vitest test runs in the same process as the server, so importing
+// env.jwtSecretKey here is legitimate, not a leaked secret. The subject
+// doesn't need to belong to a real user - jwtVerify rejects this for being
+// expired before the route ever reaches a database lookup.
+async function signExpiredRefreshToken(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  return new SignJWT({})
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject('1')
+    .setJti(randomUUID())
+    .setIssuedAt(now - 120)
+    .setExpirationTime(now - 60)
+    .sign(env.jwtSecretKey);
+}
 
 // app.inject() (Fastify's own testing API, per CLAUDE.md's stack) dispatches
 // a request straight into the route pipeline in-process - real JSON Schema
@@ -174,5 +195,25 @@ describe('POST /auth/refresh', () => {
       (first.json() as { refreshToken: string }).refreshToken,
     ).iat;
     expect(replacementIssuedAt).toBe(firstIssuedAt);
+  });
+
+  it('401s on a garbage token', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/auth/refresh',
+      payload: { refreshToken: 'garbage.not.valid' },
+    });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('401s on an expired token', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/auth/refresh',
+      payload: { refreshToken: await signExpiredRefreshToken() },
+    });
+
+    expect(response.statusCode).toBe(401);
   });
 });
