@@ -1,16 +1,18 @@
 info:
-  name: delete-project
+  name: get-project-cross-user
   type: http
-  seq: 2
+  seq: 9
 
 http:
-  method: DELETE
+  method: GET
   url: "{{baseUrl}}/projects/:id"
   params:
     - name: id
       value: "{{projectId}}"
       type: path
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{secondUserAccessToken}}"
 
 settings:
   encodeUrl: true

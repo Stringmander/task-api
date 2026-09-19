@@ -1,0 +1,23 @@
+info:
+  name: register-second-user
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/register"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "demo2@example.com",
+        "password": "correcthorse",
+        "displayName": "Demo User Two"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

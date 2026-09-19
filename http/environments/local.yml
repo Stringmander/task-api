@@ -8,3 +8,6 @@ variables:
   - name: refreshToken
     secret: true
     type: string
+  - name: secondUserAccessToken
+    secret: true
+    type: string
