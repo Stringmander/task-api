@@ -33,16 +33,19 @@ const updateTaskBodySchema = {
   },
 } as const;
 
+export type TaskStatus = 'todo' | 'in_progress' | 'done';
+export type TaskPriority = 'low' | 'medium' | 'high';
+
 interface CreateTaskBody {
   title: string;
   description?: string | null;
-  status: 'todo' | 'in_progress' | 'done';
-  priority: 'low' | 'medium' | 'high';
+  status: TaskStatus;
+  priority: TaskPriority;
   dueDate?: string | null;
   position: number;
 }
 
-type UpdateTaskBody = Partial<CreateTaskBody>;
+export type UpdateTaskBody = Partial<CreateTaskBody>;
 
 export async function taskRoutes(app: FastifyInstance): Promise<void> {
   app.get<{ Params: IdParams }>(
