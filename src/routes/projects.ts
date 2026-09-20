@@ -50,12 +50,12 @@ const updateProjectBodySchema = {
 // one from the other; this project skips that dependency for now and
 // simply keeps the two declarations next to each other so a change to one
 // is hard to make without noticing the other.
-export interface CreateProjectBody {
+interface CreateProjectBody {
   name: string;
   description?: string | null;
 }
 
-type UpdateProjectBody = Partial<CreateProjectBody>;
+export type UpdateProjectBody = Partial<CreateProjectBody>;
 
 export async function projectRoutes(app: FastifyInstance): Promise<void> {
   app.get('/projects', async (request, reply) => {

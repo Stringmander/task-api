@@ -1,12 +1,9 @@
 import type { FastifyInstance } from 'fastify';
-import { CreateProjectBody } from '../../routes/projects.js';
+import type { UpdateProjectBody } from '../../routes/projects.js';
 import { loginTestUser } from './auth-fixtures.js';
 import { expectSuccess } from './http-assertions.js';
 
-export async function createTestProject(
-  app: FastifyInstance,
-  overrides: Partial<CreateProjectBody> = {},
-) {
+export async function createTestProject(app: FastifyInstance, overrides: UpdateProjectBody = {}) {
   const owner = await loginTestUser(app);
 
   const payload = {
