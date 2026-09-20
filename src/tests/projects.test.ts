@@ -77,6 +77,10 @@ describe('POST /projects', () => {
     expect(body.description).toBe(null);
   });
 
+  // Paired with the 400 test below at 101 characters: testing only one
+  // side of this limit can't tell you the limit is in the right place,
+  // just that *some* limit exists. Both directions together prove it's
+  // exactly 100, not 99 or 105.
   it('201s at exactly the 100-character name limit', async () => {
     const { accessToken } = await loginTestUser(app);
 
@@ -150,6 +154,13 @@ describe('GET /projects', () => {
 
     expect(response.statusCode).toBe(200);
     const body = response.json();
+    // toHaveLength(1), not just "contains my project": tables only reset
+    // once per file (src/tests/setup.ts), so by this point the POST tests
+    // above have already created several other users' projects. A loose
+    // "is mine in there somewhere" check would still pass even if the
+    // route's userId filter were silently dropped entirely - asserting the
+    // exact count is what actually proves the list is scoped, not just
+    // non-empty.
     expect(body).toHaveLength(1);
     expect(body[0]).toMatchObject({
       id: project.id,
@@ -215,6 +226,12 @@ describe('PATCH /projects/:id', () => {
     expect(body.description).toBe(payload.description);
   });
 
+  // These three mirror POST's empty/too-long/invalid-name tests almost
+  // exactly, and that's deliberate, not copy-paste: updateProjectBodySchema
+  // is a second schema object in projects.ts, hand-maintained separately
+  // from createProjectBodySchema (see that file's own comment on it).
+  // Testing only POST's validation would never catch the two schemas
+  // silently drifting apart from each other.
   it('400s on an empty name', async () => {
     const { accessToken, project } = await createTestProject(app);
 
@@ -261,6 +278,10 @@ describe('DELETE /projects/:id', () => {
   it("204s and cascades to delete the project's tasks", async () => {
     const { accessToken, project } = await createTestProject(app);
 
+    // Direct inject() here, not a shared fixture - tasks-fixtures.ts
+    // doesn't exist yet, and this is currently the only place in this file
+    // that needs a task. Worth refactoring to a fixture once tasks.test.ts
+    // actually needs the same thing, not before.
     const taskResponse = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
@@ -276,6 +297,12 @@ describe('DELETE /projects/:id', () => {
     });
     expect(deleteResponse.statusCode).toBe(204);
 
+    // Proving the cascade, not just the 204, is the actual point of this
+    // test - docs/BUILD_PLAN.md names this endpoint "cascade-delete"
+    // specifically, and CLAUDE.md's domain rules state deletion cascades
+    // projects -> tasks. 403, not 404, matches this project's "403, never
+    // 404" rule everywhere else: a cascade-deleted task and one that never
+    // existed look identical to findOwnedTask's join, by design.
     const getTaskResponse = await app.inject({
       method: 'GET',
       url: `/tasks/${taskId}`,
