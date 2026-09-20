@@ -64,17 +64,17 @@ describe('POST /projects', () => {
   it('201s and returns the created project with no description', async () => {
     const { accessToken } = await loginTestUser(app);
 
+    const payload = { name: 'Minimal Project' };
+
     const response = await app.inject({
       method: 'POST',
       url: '/projects',
       headers: { authorization: `Bearer ${accessToken}` },
-      payload: { name: 'Minimal Project' },
+      payload,
     });
 
     expect(response.statusCode).toBe(201);
-    const body = response.json();
-    expect(body.name).toBe('Minimal Project');
-    expect(body.description).toBe(null);
+    expect(response.json()).toMatchObject({ name: payload.name, description: null });
   });
 
   // Paired with the 400 test below at 101 characters: testing only one
