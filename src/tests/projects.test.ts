@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../app.js';
 import { loginTestUser } from './helpers/auth-fixtures.js';
 import { createTestProject } from './helpers/projects-fixtures.js';
+import { createTestTask } from './helpers/tasks-fixtures.js';
 
 let app: FastifyInstance;
 
@@ -290,19 +291,7 @@ describe('PATCH /projects/:id', () => {
 
 describe('DELETE /projects/:id', () => {
   it("204s and cascades to delete the project's tasks", async () => {
-    const { accessToken, project } = await createTestProject(app);
-
-    // Direct inject() here, not a shared fixture - tasks-fixtures.ts
-    // doesn't exist yet, and this is currently the only place in this file
-    // that needs a task. Worth refactoring to a fixture once tasks.test.ts
-    // actually needs the same thing, not before.
-    const taskResponse = await app.inject({
-      method: 'POST',
-      url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
-      payload: { title: 'Some Task' },
-    });
-    const taskId = taskResponse.json().id;
+    const { accessToken, project, task } = await createTestTask(app);
 
     const deleteResponse = await app.inject({
       method: 'DELETE',
@@ -319,7 +308,7 @@ describe('DELETE /projects/:id', () => {
     // existed look identical to findOwnedTask's join, by design.
     const getTaskResponse = await app.inject({
       method: 'GET',
-      url: `/tasks/${taskId}`,
+      url: `/tasks/${task.id}`,
       headers: { authorization: `Bearer ${accessToken}` },
     });
     expect(getTaskResponse.statusCode).toBe(403);
