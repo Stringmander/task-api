@@ -115,6 +115,10 @@ describe('POST /projects/:id/tasks', () => {
     expect(response.json().title).toBe(payload.title);
   });
 
+  // Distinct from the empty-title test below: '' fails createTaskBodySchema's
+  // minLength, an omitted key fails its separate `required` check. Testing
+  // only one of the two couldn't catch the other silently disappearing from
+  // the schema.
   it('400s on an omitted title', async () => {
     const { accessToken, project } = await createTestProject(app);
 
@@ -259,6 +263,13 @@ describe('GET /tasks/:id', () => {
 });
 
 describe('PATCH /tasks/:id', () => {
+  // Updates two fields at once rather than one test per field: the route's
+  // partial-update logic is a single shared `.set({ title, description,
+  // status, priority, dueDate, position })` call with no per-field branching,
+  // so a title-only or dueDate-only variant would exercise identical code.
+  // This also proves the undefined-skip mechanism more strongly than a
+  // single-field test would, by asserting every untouched field survived
+  // rather than just one.
   it('200s and returns the task with only the updated fields changed', async () => {
     const { accessToken, task } = await createTestTask(app);
 
@@ -282,6 +293,11 @@ describe('PATCH /tasks/:id', () => {
     });
   });
 
+  // These five mirror POST's own title/status/priority validation tests
+  // almost exactly, and that's deliberate, not copy-paste: updateTaskBodySchema
+  // is a second schema object in tasks.ts, hand-maintained separately from
+  // createTaskBodySchema. Testing only POST's validation would never catch
+  // the two schemas silently drifting apart from each other.
   it('400s on an empty title', async () => {
     const { accessToken, task } = await createTestTask(app);
 
@@ -362,6 +378,9 @@ describe('DELETE /tasks/:id', () => {
     });
     expect(deleteResponse.statusCode).toBe(204);
 
+    // 403, not 404, on the follow-up GET: matches this project's "403,
+    // never 404" rule everywhere else - findOwnedTask can't distinguish a
+    // deleted task from one that never existed, by design.
     const getResponse = await app.inject({
       method: 'GET',
       url: `/tasks/${task.id}`,
