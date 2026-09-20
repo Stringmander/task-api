@@ -112,6 +112,19 @@ describe('POST /projects', () => {
     expect(response.statusCode).toBe(400);
   });
 
+  it('400s on an omitted name', async () => {
+    const { accessToken } = await loginTestUser(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/projects',
+      headers: { authorization: `Bearer ${accessToken}` },
+      payload: { description: 'This project has no name.' },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it('400s one character past the name limit', async () => {
     const { accessToken } = await loginTestUser(app);
 
