@@ -1,7 +1,7 @@
 info:
   name: create-task-invalid-status
   type: http
-  seq: 4
+  seq: 7
 
 http:
   method: POST

@@ -1,7 +1,7 @@
 info:
   name: get-task-cross-user
   type: http
-  seq: 8
+  seq: 3
 
 http:
   method: GET

@@ -1,22 +1,27 @@
 info:
-  name: create-task-minimal
+  name: create-task-cascade-delete
   type: http
-  seq: 4
+  seq: 9
 
 http:
   method: POST
   url: "{{baseUrl}}/projects/:id/tasks"
   params:
     - name: id
-      value: "{{projectId}}"
+      value: "{{cascadeProjectId}}"
       type: path
   body:
     type: json
     data: |-
       {
-        "title": "Minimal task"
+        "title": "Task that should disappear with its project"
       }
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("cascadeTaskId", res.body.id);
 
 settings:
   encodeUrl: true

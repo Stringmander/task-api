@@ -1,7 +1,7 @@
 info:
   name: update-project-invalid-type
   type: http
-  seq: 8
+  seq: 6
 
 http:
   method: PATCH

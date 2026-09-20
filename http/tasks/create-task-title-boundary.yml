@@ -1,20 +1,20 @@
 info:
-  name: update-task-invalid-status
+  name: create-task-title-boundary
   type: http
   seq: 8
 
 http:
-  method: PATCH
-  url: "{{baseUrl}}/tasks/:id"
+  method: POST
+  url: "{{baseUrl}}/projects/:id/tasks"
   params:
     - name: id
-      value: "{{taskId}}"
+      value: "{{projectId}}"
       type: path
   body:
     type: json
     data: |-
       {
-        "status": "cancelled"
+        "title": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       }
   auth: inherit
 

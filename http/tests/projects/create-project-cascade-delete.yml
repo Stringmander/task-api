@@ -1,7 +1,7 @@
 info:
-  name: create-project-name-too-long
+  name: create-project-cascade-delete
   type: http
-  seq: 5
+  seq: 8
 
 http:
   method: POST
@@ -10,10 +10,14 @@ http:
     type: json
     data: |-
       {
-        "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "description": "boundary test: 101 characters"
+        "name": "Cascade Delete Project"
       }
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("cascadeProjectId", res.body.id);
 
 settings:
   encodeUrl: true

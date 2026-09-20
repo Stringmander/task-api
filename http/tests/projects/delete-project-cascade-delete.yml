@@ -1,21 +1,15 @@
 info:
-  name: update-task-invalid-status
+  name: delete-project-cascade-delete
   type: http
-  seq: 8
+  seq: 10
 
 http:
-  method: PATCH
-  url: "{{baseUrl}}/tasks/:id"
+  method: DELETE
+  url: "{{baseUrl}}/projects/:id"
   params:
     - name: id
-      value: "{{taskId}}"
+      value: "{{cascadeProjectId}}"
       type: path
-  body:
-    type: json
-    data: |-
-      {
-        "status": "cancelled"
-      }
   auth: inherit
 
 settings:

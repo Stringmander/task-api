@@ -1,21 +1,15 @@
 info:
-  name: update-task-invalid-status
+  name: get-task-after-cascade-delete
   type: http
-  seq: 8
+  seq: 11
 
 http:
-  method: PATCH
+  method: GET
   url: "{{baseUrl}}/tasks/:id"
   params:
     - name: id
-      value: "{{taskId}}"
+      value: "{{cascadeTaskId}}"
       type: path
-  body:
-    type: json
-    data: |-
-      {
-        "status": "cancelled"
-      }
   auth: inherit
 
 settings:
