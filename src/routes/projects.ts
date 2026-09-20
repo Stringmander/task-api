@@ -50,7 +50,7 @@ const updateProjectBodySchema = {
 // one from the other; this project skips that dependency for now and
 // simply keeps the two declarations next to each other so a change to one
 // is hard to make without noticing the other.
-interface CreateProjectBody {
+export interface CreateProjectBody {
   name: string;
   description?: string | null;
 }
