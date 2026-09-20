@@ -96,8 +96,7 @@ describe('POST /projects', () => {
     });
 
     expect(response.statusCode).toBe(201);
-    const body = response.json();
-    expect(body.name).toBe(payload.name);
+    expect(response.json().name).toBe(payload.name);
   });
 
   it('400s on an empty name', async () => {
@@ -203,9 +202,10 @@ describe('PATCH /projects/:id', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const body = response.json();
-    expect(body.name).toBe(payload.name);
-    expect(body.description).toBe(project.description);
+    expect(response.json()).toMatchObject({
+      name: payload.name,
+      description: project.description,
+    });
   });
 
   it('200s and returns the project with updated description', async () => {
@@ -221,9 +221,10 @@ describe('PATCH /projects/:id', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const body = response.json();
-    expect(body.name).toBe(project.name);
-    expect(body.description).toBe(payload.description);
+    expect(response.json()).toMatchObject({
+      name: project.name,
+      description: payload.description,
+    });
   });
 
   // These three mirror POST's empty/too-long/invalid-name tests almost
