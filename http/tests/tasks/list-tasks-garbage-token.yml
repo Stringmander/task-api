@@ -12,7 +12,7 @@ http:
       type: path
   auth:
     type: bearer
-    token: garbagetoken
+    token: garbage.not.valid
 
 settings:
   encodeUrl: true

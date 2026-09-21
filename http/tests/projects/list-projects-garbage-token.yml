@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/projects"
   auth:
     type: bearer
-    token: garbagetoken
+    token: garbage.not.valid
 
 settings:
   encodeUrl: true
