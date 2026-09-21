@@ -28,6 +28,14 @@ afterAll(async () => {
 });
 
 describe('user lifecycle', () => {
+  // One test, not one per step, and no shared fixtures: every step depends
+  // on the previous response (the login token, the new project's id, the
+  // new task's id), and proving that chain works end to end is the whole
+  // point - a fixture would hide those hand-offs inside a helper. Splitting
+  // it up would also need mutable state shared between tests. Assertions
+  // stay thin on purpose: field-level correctness is already covered in
+  // projects.test.ts and tasks.test.ts, so each step only checks its status
+  // code, which makes a failure point at the exact step that broke.
   it('registers, logs in, creates a project and task, updates it, and deletes it', async () => {
     const email = `journey-${randomUUID()}@example.com`;
     const password = 'correcthorse';
@@ -72,11 +80,15 @@ describe('user lifecycle', () => {
       payload: { status: 'done' },
     });
     expect(update.statusCode).toBe(200);
+    // The one content check in the journey: proves the update actually
+    // persisted, not just that the endpoint answered 200.
     expect(update.json().status).toBe('done');
 
     const del = await app.inject({ method: 'DELETE', url: `/tasks/${taskId}`, headers });
     expect(del.statusCode).toBe(204);
 
+    // 403, not 404: findOwnedTask can't tell a deleted task from one that
+    // never existed, by design.
     const gone = await app.inject({ method: 'GET', url: `/tasks/${taskId}`, headers });
     expect(gone.statusCode).toBe(403);
   });
