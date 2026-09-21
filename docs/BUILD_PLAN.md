@@ -115,8 +115,14 @@ Verified via `bru run -r --env local` end to end: all 26 requests
 return exactly the status code each is designed to test.
 
 ### Phase 4 - Test suite (~6-7h)
+Status: COMPLETE and verified 2026-09-21 locally (CI run is Phase 5).
 Suites in order: auth, authorization, projects, tasks, integration.
 Target: green suite of ~28 tests against real Postgres.
+Landed at 55 tests across 5 files (auth 10, authorization 11,
+projects 15, tasks 18, integration 1), well past the ~28 estimate:
+per-suite budgets were rough starting points, and risk analysis
+(schema drift between create/update schemas, boundary pairs,
+mutation-blocking cross-user checks) drove the real coverage.
 
 ### Phase 5 - Docker + CI + docs (~3-4h)
 Multi-stage Dockerfile (non-root runtime), docker-compose with
