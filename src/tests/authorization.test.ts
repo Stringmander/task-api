@@ -7,6 +7,12 @@ import { createTestProject } from './helpers/projects-fixtures.js';
 import { loginTestUser } from './helpers/auth-fixtures.js';
 import { createTestTask } from './helpers/tasks-fixtures.js';
 
+// Mirrors auth.test.ts's signExpiredRefreshToken, minus setJti - access
+// tokens don't carry one (CLAUDE.md: payload is sub/iat/exp only). The
+// subject doesn't need to belong to a real user: the Bearer preHandler
+// (src/plugins/bearer-auth.ts) calls jwtVerify and fails closed on any
+// throw, expiry included, before request.user is ever set and before any
+// route handler - let alone a database lookup - runs.
 async function signExpiredAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   return new SignJWT({})
@@ -42,6 +48,12 @@ afterAll(async () => {
 });
 
 describe('GET /projects', () => {
+  // These three run against one representative route rather than every
+  // protected one: the Bearer preHandler is a single Fastify hook
+  // (registerBearerAuth) applied identically ahead of every route it
+  // guards, so re-running the same three checks against PATCH /tasks/:id
+  // or any other protected endpoint would exercise the exact same hook
+  // code, not a route-specific variant of it.
   it('401s without authorization header', async () => {
     const response = await app.inject({
       method: 'GET',
@@ -110,6 +122,12 @@ describe('GET /projects/:id', () => {
 });
 
 describe('PATCH /projects/:id', () => {
+  // Cross-user GET, PATCH, and DELETE each get their own test here, even
+  // though all three route through the same findOwnedProject/findOwnedTask
+  // check: a GET test only proves that check returns the right verdict. It
+  // can't prove a mutating handler actually acts on that verdict - i.e.
+  // early-returns instead of falling through to the update or delete. That
+  // guard is duplicated per handler, so it can regress per handler too.
   it("403s when a different user tries to update someone else's project", async () => {
     const { project } = await createTestProject(app);
     const { accessToken } = await loginTestUser(app);
@@ -187,6 +205,10 @@ describe('DELETE /tasks/:id', () => {
 });
 
 describe('GET /projects/:id/tasks', () => {
+  // createTestProject, not createTestTask: the route checks project
+  // ownership before it ever queries for tasks, so whether a task exists
+  // under this project is irrelevant to proving the 403 - createTestTask
+  // would just be extra setup weight for no additional coverage.
   it("403s when a different user requests someone else's project tasks", async () => {
     const { project } = await createTestProject(app);
     const { accessToken } = await loginTestUser(app);
