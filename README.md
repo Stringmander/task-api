@@ -1,5 +1,7 @@
 # task-api
 
+[![CI](https://github.com/Stringmander/task-api/actions/workflows/ci.yml/badge.svg)](https://github.com/Stringmander/task-api/actions/workflows/ci.yml)
+
 A task management REST API built with TypeScript, Fastify, and
 PostgreSQL. Users own projects; projects contain tasks; access is
 scoped to the authenticated user at every layer.
@@ -19,9 +21,6 @@ documented end-to-end.
 | Testing    | Vitest via Fastify `inject()` against a real database       |
 | Containers | Multi-stage Docker build, docker-compose for local Postgres |
 | API docs   | OpenAPI spec generated from route schemas via `@fastify/swagger` |
-
-<!-- TODO(Claude): add CI badge + lint badge once GitHub Actions
-     workflow exists (Phase 5) -->
 
 ## Prerequisites
 
@@ -99,9 +98,19 @@ Deleting a project cascades to its tasks at the database level (foreign key `ON 
 
 ### Authentication
 
-<!-- TODO(Phase 3): document /auth/register, /auth/login, /auth/refresh, token lifecycle (15-minute access tokens, 7-day rotating refresh tokens stored hashed), and the Bearer-token preHandler. Also update the ownership notes above: "current user" becomes real, not the stub. -->
+| Method | Path             | Description                                     |
+| ------ | ---------------- | ------------------------------------------------ |
+| POST   | `/auth/register` | Create a user (email, password, displayName)    |
+| POST   | `/auth/login`    | Exchange credentials for an access/refresh pair  |
+| POST   | `/auth/refresh`  | Rotate a refresh token for a new pair            |
 
-**Status: authentication is not yet implemented.** Ownership scoping exists at the route layer and will be enforced by real auth in an upcoming phase.
+All `/projects` and `/tasks` routes above require `Authorization: Bearer <accessToken>`; `"current user"` in their descriptions means whoever that token belongs to, verified on every request, not passed by the client.
+
+- **Access tokens:** 15-minute expiry, stateless (payload is just `sub`/`iat`/`exp` — nothing revocable server-side).
+- **Refresh tokens:** 7-day expiry, tracked server-side (hashed, never stored raw) and rotated on every use — presenting one invalidates it and issues a new pair. A token that's already been rotated away (or never existed) is rejected identically to a garbage one; there's no way, or need, to tell "reused" apart from "never issued."
+- **Password hashing:** bcrypt, cost factor 12.
+- Login and register return the same `401` for an unknown email as for a wrong password — no user enumeration via response differences.
+- A single Fastify `preHandler` hook verifies the Bearer token on every route by default and fails closed: a route has to opt out explicitly (`config: { public: true }`, used by `/health`, `/openapi.json`, and `/auth/*` itself) rather than opt in, so a route that forgets to declare itself protected stays protected anyway.
 
 ## Database
 
@@ -116,9 +125,22 @@ The `drizzle-kit push` shortcut is intentionally not used; the migration history
 
 ## Testing
 
-<!-- TODO(Phase 4): document `npm test`, the Vitest setup, running tests against the Docker database, and the suite's coverage areas (auth, authorization, CRUD, lifecycle). -->
+```bash
+docker compose up -d db   # tests need Postgres running
+npm test
+```
 
-Tests arrive with the test phase; the plan is integration tests against a real PostgreSQL instance via Fastify's `inject()`.
+55 integration tests (Vitest + Fastify's `inject()`, no mocking) against a real, disposable `taskapi_test` database — dropped and recreated fresh before the run, so there's no drift between what's tested and the current migrations:
+
+| Suite                    | Tests | Covers                                                                                         |
+| ------------------------ | ----- | ------------------------------------------------------------------------------------------------ |
+| `auth.test.ts`           | 10    | Register/login/refresh - validation, duplicate email, rotation, reuse rejection                |
+| `authorization.test.ts`  | 11    | The Bearer preHandler itself (missing/garbage/expired token) and cross-user 403s on every mutating route |
+| `projects.test.ts`       | 15    | CRUD, validation boundaries, cascade-delete to a project's tasks                                |
+| `tasks.test.ts`          | 18    | CRUD, partial-update semantics, validation boundaries                                           |
+| `integration.test.ts`    | 1     | A full register → login → create → update → delete lifecycle                                    |
+
+`vitest.config.ts` runs test files sequentially (`fileParallelism: false`), since they share one database.
 
 ## API Specification
 
@@ -131,9 +153,19 @@ No interactive Swagger UI: `@fastify/swagger-ui` registers its own routes with n
 
 ## Docker
 
-<!-- TODO(Phase 5): document the multi-stage production build and `docker compose up --build` for the full stack. -->
+```bash
+docker compose up -d --build   # Postgres + the API, both containerized
+```
 
-Local development uses Docker Compose for PostgreSQL only; the API runs on the host under `npm run dev`.
+The `Dockerfile` is a multi-stage build: a `build` stage installs full dependencies and compiles with `tsc`, then a `runtime` stage installs production dependencies only and copies over just the compiled `dist/` and the SQL migrations in `drizzle/` — no TypeScript source or dev tooling ships in the final image. It runs as the non-root `node` user that `node:alpine` images provide out of the box, and declares a `HEALTHCHECK` against `/health`.
+
+`docker-compose.yml`'s `app` service depends on `db`'s own healthcheck (`condition: service_healthy`), so it won't start against a database that isn't actually ready yet, not just one that's merely running. Migrations aren't applied automatically on container start — that's a deliberate, separate step, since auto-migrating on boot gets risky with multiple replicas or a rollback:
+
+```bash
+docker compose exec app node dist/db/migrate.js
+```
+
+For active development (hot reload, no rebuild per change), use the [Getting Started](#getting-started) flow instead — `docker compose up -d db` for Postgres only, `npm run dev` for the API on the host.
 
 ## Project Structure
 
@@ -145,7 +177,8 @@ src/
 ├── routes/       # route definitions (auth, projects, tasks)
 ├── lib/          # shared logic (ownership checks, id param schema, error shaping, tokens)
 ├── db/           # Drizzle schema, client, and migration runner
-└── plugins/      # Bearer-token preHandler — verifies access tokens, sets request.user
+├── plugins/      # Bearer-token preHandler — verifies access tokens, sets request.user
+└── scripts/      # one-off operational scripts (e.g. OpenAPI spec generation)
 drizzle/          # committed SQL migrations + drizzle-kit snapshot metadata
 http/             # OpenCollection request collection (Bruno et al.)
 docs/             # build plan, route pattern guide
