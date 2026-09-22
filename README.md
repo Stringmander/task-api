@@ -18,7 +18,7 @@ documented end-to-end.
 | ORM        | Drizzle with drizzle-kit migrations (SQL files committed)   |
 | Testing    | Vitest via Fastify `inject()` against a real database       |
 | Containers | Multi-stage Docker build, docker-compose for local Postgres |
-| API docs   | OpenAPI spec generated from route schemas (Phase 5)         |
+| API docs   | OpenAPI spec generated from route schemas via `@fastify/swagger` |
 
 <!-- TODO(Claude): add CI badge + lint badge once GitHub Actions
      workflow exists (Phase 5) -->
@@ -122,9 +122,12 @@ Tests arrive with the test phase; the plan is integration tests against a real P
 
 ## API Specification
 
-<!-- TODO(Phase 5): generate openapi.yaml from route schemas via @fastify/swagger per the decisions record; document how to regenerate and (optionally) serve Swagger UI in dev mode. Never hand-edit the generated spec. -->
+An OpenAPI 3.0 specification is generated directly from the route validation schemas via [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) — never hand-edited, since it's derived from code, not maintained alongside it.
 
-The API will ship an OpenAPI specification generated directly from the route validation schemas (Phase 5). Hand-editing the generated file is prohibited; it is derived from code, not maintained alongside it.
+- **Committed copy:** [`openapi.yaml`](/openapi.yaml), regenerated with `npm run docs:openapi` whenever a route schema changes.
+- **Live copy:** `GET /openapi.json` on a running server — always current, no regeneration step.
+
+No interactive Swagger UI: `@fastify/swagger-ui` registers its own routes with no way to exempt them from this API's global Bearer-auth preHandler (see `src/plugins/bearer-auth.ts`), and that file's fail-closed design isn't worth bending for a documentation page. The raw spec imports directly into [Swagger Editor](https://editor.swagger.io), Postman, or any OpenAPI-compatible client instead.
 
 ## Docker
 
