@@ -125,10 +125,18 @@ per-suite budgets were rough starting points, and risk analysis
 mutation-blocking cross-user checks) drove the real coverage.
 
 ### Phase 5 - Docker + CI + docs (~3-4h)
+Status: COMPLETE and verified 2026-09-22.
 Multi-stage Dockerfile (non-root runtime), docker-compose with
 healthcheck, GitHub Actions (test + lint jobs), README with badges,
 setup steps, endpoint reference, OpenAPI spec via @fastify/swagger,
 Bruno/OpenCollection request collection committed under http/.
+All landed: multi-stage build verified end to end (built, ran
+migrations, confirmed non-root, real register request through the
+containerized app); CI's two jobs (test against a postgres service
+container, lint) both green on GitHub, not just locally; OpenAPI spec
+generated from route schemas, committed and regenerable, served live
+at GET /openapi.json; README's four remaining stale TODOs (badge,
+auth, testing, Docker sections) replaced with what's actually there.
 
 ## Session Rules
 
@@ -139,9 +147,9 @@ Bruno/OpenCollection request collection committed under http/.
 
 ## Definition of Done
 
-- [ ] 14 endpoints implemented with validation
-- [ ] ~28 tests passing locally and in CI
-- [ ] Green CI badges on README
-- [ ] Multi-stage image builds and compose boots from clean clone
-- [ ] README sufficient for a stranger to run the project
-- [ ] Commit history reads as deliberate, conventional commits
+- [x] 14 endpoints implemented with validation
+- [x] ~28 tests passing locally and in CI
+- [x] Green CI badges on README
+- [x] Multi-stage image builds and compose boots from clean clone
+- [x] README sufficient for a stranger to run the project
+- [x] Commit history reads as deliberate, conventional commits
