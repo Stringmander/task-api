@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Matches docker-compose.yml's db service exactly (same image, same
+    # credentials, same taskapi maintenance database) so the test suite
+    # behaves identically here and locally. global-setup.ts connects to
+    # this maintenance database to DROP/CREATE taskapi_test before
+    # migrating it - the service container needs to be healthy before
+    # that can happen, hence the health check below gating the job's
+    # steps rather than just the container's existence.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: taskapi
+          POSTGRES_PASSWORD: taskapi
+          POSTGRES_DB: taskapi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U taskapi -d taskapi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      # No build step first: vitest transforms TypeScript on the fly, and
+      # running `build` before `test` was already the exact cause of a
+      # real bug (see vitest.config.ts's dist/** exclude comment) - the
+      # compiled output has no business existing before this step.
+      - run: npm test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      # eslint + tsc --noEmit (see package.json) - no database needed,
+      # so this job has no postgres service, unlike test above.
+      - run: npm run lint
