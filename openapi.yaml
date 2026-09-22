@@ -1,0 +1,287 @@
+openapi: 3.0.0
+info:
+  title: task-api
+  description: >-
+    Task management REST API. Users own projects; projects contain tasks; access
+    is scoped to the authenticated user at every layer.
+  version: 0.1.0
+components:
+  schemas: {}
+paths:
+  /health:
+    get:
+      responses:
+        '200':
+          description: Default Response
+  /auth/register:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - displayName
+              additionalProperties: false
+              properties:
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 72
+                displayName:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+      responses:
+        '200':
+          description: Default Response
+  /auth/login:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              additionalProperties: false
+              properties:
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 72
+      responses:
+        '200':
+          description: Default Response
+  /auth/refresh:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              additionalProperties: false
+              properties:
+                refreshToken:
+                  type: string
+                  pattern: ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$
+                  maxLength: 2048
+      responses:
+        '200':
+          description: Default Response
+  /projects:
+    get:
+      responses:
+        '200':
+          description: Default Response
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                description:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Default Response
+  /projects/{id}:
+    get:
+      parameters:
+        - schema:
+            type: string
+            pattern: ^[0-9]{1,15}$
+          in: path
+          name: id
+          required: true
+      responses:
+        '200':
+          description: Default Response
+    patch:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                description:
+                  type: string
+                  nullable: true
+      parameters:
+        - schema:
+            type: string
+            pattern: ^[0-9]{1,15}$
+          in: path
+          name: id
+          required: true
+      responses:
+        '200':
+          description: Default Response
+    delete:
+      parameters:
+        - schema:
+            type: string
+            pattern: ^[0-9]{1,15}$
+          in: path
+          name: id
+          required: true
+      responses:
+        '200':
+          description: Default Response
+  /projects/{id}/tasks:
+    get:
+      parameters:
+        - schema:
+            type: string
+            pattern: ^[0-9]{1,15}$
+          in: path
+          name: id
+          required: true
+      responses:
+        '200':
+          description: Default Response
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              additionalProperties: false
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                description:
+                  type: string
+                  nullable: true
+                status:
+                  type: string
+                  enum:
+                    - todo
+                    - in_progress
+                    - done
+                priority:
+                  type: string
+                  enum:
+                    - low
+                    - medium
+                    - high
+                dueDate:
+                  type: string
+                  format: date
+                  nullable: true
+                position:
+                  type: integer
+      parameters:
+        - schema:
+            type: string
+            pattern: ^[0-9]{1,15}$
+          in: path
+          name: id
+          required: true
+      responses:
+        '200':
+          description: Default Response
+  /tasks/{id}:
+    get:
+      parameters:
+        - schema:
+            type: string
+            pattern: ^[0-9]{1,15}$
+          in: path
+          name: id
+          required: true
+      responses:
+        '200':
+          description: Default Response
+    patch:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                description:
+                  type: string
+                  nullable: true
+                status:
+                  type: string
+                  enum:
+                    - todo
+                    - in_progress
+                    - done
+                priority:
+                  type: string
+                  enum:
+                    - low
+                    - medium
+                    - high
+                dueDate:
+                  type: string
+                  format: date
+                  nullable: true
+                position:
+                  type: integer
+      parameters:
+        - schema:
+            type: string
+            pattern: ^[0-9]{1,15}$
+          in: path
+          name: id
+          required: true
+      responses:
+        '200':
+          description: Default Response
+    delete:
+      parameters:
+        - schema:
+            type: string
+            pattern: ^[0-9]{1,15}$
+          in: path
+          name: id
+          required: true
+      responses:
+        '200':
+          description: Default Response
