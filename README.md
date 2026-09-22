@@ -38,6 +38,11 @@ cd task-api
 # Install dependencies (Node version switches automatically with fnm)
 npm install
 
+# Configure environment
+cp .env.example .env
+# then set JWT_SECRET in .env — generate one with:
+#   openssl rand -base64 32
+
 # Start PostgreSQL in Docker
 docker compose up -d db
 
@@ -64,7 +69,7 @@ The collection is organized as a walkthrough with no manual copy-pasting: `login
 
 Filenames follow a `verb-noun[-modifier].yml` convention (e.g. `create-project.yml`, `create-project-name-too-long.yml`). An `http/environments/local.yml` environment (named `Local`) provides `{{baseUrl}}`; select it in your client before running any request.
 
-`accessToken` and `refreshToken` are declared as secret variables in that same environment file — the declaration is safe to commit (it's just a name and a type), but the actual value is never written to any file; Bruno stores it locally, encrypted, and `login`/`refresh`'s scripts populate it fresh on each run.
+`accessToken`, `refreshToken`, and `secondUserAccessToken` (used by the cross-user 403 checks under `tests/`) are declared as secret variables in that same environment file — the declaration is safe to commit (it's just a name and a type), but the actual value is never written to any file; Bruno stores it locally, encrypted, and the relevant login script populates it fresh on each run.
 
 ## API Endpoints
 
@@ -94,7 +99,7 @@ Filenames follow a `verb-noun[-modifier].yml` convention (e.g. `create-project.y
 | PATCH  | `/tasks/:id`          | Partially update a task    |
 | DELETE | `/tasks/:id`          | Delete a task              |
 
-Task fields: `title` (required), `description`, `status` (`todo` | `in_progress` | `done`, default `todo`), `priority` (`low` | `medium` | `high`, default `medium`), `due_date`, `position` (default `0`).
+Task fields: `title` (required), `description`, `status` (`todo` | `in_progress` | `done`, default `todo`), `priority` (`low` | `medium` | `high`, default `medium`), `dueDate`, `position` (default `0`).
 
 Requests and responses are JSON. Unexpected input types are rejected with `400` — no silent coercion. Errors use a consistent shape: `{ "statusCode": ..., "error": ..., "message": ... }`.
 
@@ -182,10 +187,12 @@ src/
 ├── lib/          # shared logic (ownership checks, id param schema, error shaping, tokens)
 ├── db/           # Drizzle schema, client, and migration runner
 ├── plugins/      # Bearer-token preHandler — verifies access tokens, sets request.user
-└── scripts/      # one-off operational scripts (e.g. OpenAPI spec generation)
+├── scripts/      # one-off operational scripts (e.g. OpenAPI spec generation)
+└── tests/        # Vitest suites + shared fixtures (see Testing below)
 drizzle/          # committed SQL migrations + drizzle-kit snapshot metadata
 http/             # OpenCollection request collection (Bruno et al.)
-docs/             # build plan, route pattern guide
+docs/             # build plan, route pattern and auth pattern guides
+.github/          # CI workflow (test + lint jobs)
 .claude/          # AI-assistant workflow commands
 ```
 
