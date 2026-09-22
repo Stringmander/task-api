@@ -16,5 +16,25 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Overrides .env's own DATABASE_URL: from inside this container "db"
+      # is the other service's hostname on the compose network, not
+      # localhost - the port itself (5432) is unchanged.
+      DATABASE_URL: postgres://taskapi:taskapi@db:5432/taskapi
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+    # No healthcheck block here - the Dockerfile's own HEALTHCHECK
+    # instruction already covers this service; compose picks it up from
+    # the image without needing it redeclared.
+
 volumes:
   db-data:
