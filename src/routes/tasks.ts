@@ -47,10 +47,36 @@ interface CreateTaskBody {
 
 export type UpdateTaskBody = Partial<CreateTaskBody>;
 
+const taskResponseSchema = {
+  $id: 'taskResponseSchema',
+  description: 'A task',
+  type: 'object',
+  properties: {
+    id: { type: 'integer' },
+    projectId: { type: 'integer' },
+    title: { type: 'string' },
+    description: { type: ['string', 'null'] },
+    status: { type: 'string' },
+    priority: { type: 'string' },
+    dueDate: { type: ['string', 'null'] },
+    position: { type: 'integer' },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+  },
+} as const;
+
+const tasksResponseSchema = {
+  description: 'A list of tasks',
+  type: 'array',
+  items: { $ref: 'taskResponseSchema' },
+} as const;
+
 export async function taskRoutes(app: FastifyInstance): Promise<void> {
+  app.addSchema(taskResponseSchema);
+
   app.get<{ Params: IdParams }>(
     '/projects/:id/tasks',
-    { schema: { params: idParamSchema } },
+    { schema: { params: idParamSchema, response: { 200: tasksResponseSchema } } },
     async (request, reply) => {
       // Safe as a plain Number(): idParamSchema's pattern caps id at 15
       // digits, well under Number.MAX_SAFE_INTEGER, and the id column is a
@@ -78,7 +104,13 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
 
   app.post<{ Body: CreateTaskBody; Params: IdParams }>(
     '/projects/:id/tasks',
-    { schema: { body: createTaskBodySchema, params: idParamSchema } },
+    {
+      schema: {
+        body: createTaskBodySchema,
+        params: idParamSchema,
+        response: { 201: taskResponseSchema },
+      },
+    },
     async (request, reply) => {
       const { title, description, status, priority, dueDate, position } = request.body;
       const projectId = Number(request.params.id);
@@ -108,7 +140,7 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
 
   app.get<{ Params: IdParams }>(
     '/tasks/:id',
-    { schema: { params: idParamSchema } },
+    { schema: { params: idParamSchema, response: { 200: taskResponseSchema } } },
     async (request, reply) => {
       const taskId = Number(request.params.id);
 
@@ -123,7 +155,13 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
 
   app.patch<{ Body: UpdateTaskBody; Params: IdParams }>(
     '/tasks/:id',
-    { schema: { body: updateTaskBodySchema, params: idParamSchema } },
+    {
+      schema: {
+        body: updateTaskBodySchema,
+        params: idParamSchema,
+        response: { 200: taskResponseSchema },
+      },
+    },
     async (request, reply) => {
       const { title, description, status, priority, dueDate, position } = request.body;
       const taskId = Number(request.params.id);
@@ -149,7 +187,7 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
 
   app.delete<{ Params: IdParams }>(
     '/tasks/:id',
-    { schema: { params: idParamSchema } },
+    { schema: { params: idParamSchema, response: { 204: { type: 'null', description: 'No content' } } } },
     async (request, reply) => {
       const taskId = Number(request.params.id);
 

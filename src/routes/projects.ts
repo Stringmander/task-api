@@ -43,6 +43,35 @@ const updateProjectBodySchema = {
   },
 } as const;
 
+// Matches every column .returning() actually returns from `projects`
+// (schema.ts) - no more, no less. Unlike the body schemas above,
+// additionalProperties: false isn't needed here: a response schema doesn't
+// reject anything, it's a serialization whitelist - Fastify only writes out
+// the properties listed here regardless of that flag, silently dropping
+// whatever else the handler returned. That's what makes keeping this in
+// sync with .returning()'s actual shape a correctness requirement, not
+// just a documentation nicety - a field missing here disappears from the
+// real response, not just from openapi.yaml.
+const projectResponseSchema = {
+  $id: 'projectResponseSchema',
+  description: 'A project',
+  type: 'object',
+  properties: {
+    id: { type: 'integer' },
+    userId: { type: 'integer' },
+    name: { type: 'string' },
+    description: { type: ['string', 'null'] },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+  },
+} as const;
+
+const projectsResponseSchema = {
+  description: 'A list of projects',
+  type: 'array',
+  items: { $ref: 'projectResponseSchema' },
+} as const;
+
 // Mirrors createProjectBodySchema by hand. Fastify's JSON Schema and
 // TypeScript's type system are two separate worlds — nothing here proves
 // they stay in sync. A JSON-Schema-to-TS provider (e.g.
@@ -58,18 +87,28 @@ interface CreateProjectBody {
 export type UpdateProjectBody = Partial<CreateProjectBody>;
 
 export async function projectRoutes(app: FastifyInstance): Promise<void> {
-  app.get('/projects', async (request, reply) => {
-    const userProjects = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.userId, request.user.id));
+  // A schema's `$id` doesn't register it anywhere by itself - it's just a
+  // property on the object. addSchema is what actually makes it resolvable
+  // by $ref: 'projectResponseSchema' below, and it has to run before any
+  // route that references it is registered.
+  app.addSchema(projectResponseSchema);
 
-    reply.code(200).send(userProjects);
-  });
+  app.get(
+    '/projects',
+    { schema: { response: { 200: projectsResponseSchema } } },
+    async (request, reply) => {
+      const userProjects = await db
+        .select()
+        .from(projects)
+        .where(eq(projects.userId, request.user.id));
+
+      reply.code(200).send(userProjects);
+    },
+  );
 
   app.post<{ Body: CreateProjectBody }>(
     '/projects',
-    { schema: { body: createProjectBodySchema } },
+    { schema: { body: createProjectBodySchema, response: { 201: projectResponseSchema } } },
     async (request, reply) => {
       const { name, description } = request.body;
 
@@ -94,7 +133,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
 
   app.get<{ Params: IdParams }>(
     '/projects/:id',
-    { schema: { params: idParamSchema } },
+    { schema: { params: idParamSchema, response: { 200: projectResponseSchema } } },
     async (request, reply) => {
       // Safe as a plain Number(): idParamSchema's pattern caps id at 15
       // digits, well under Number.MAX_SAFE_INTEGER, and the id column is a
@@ -117,7 +156,13 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
 
   app.patch<{ Body: UpdateProjectBody; Params: IdParams }>(
     '/projects/:id',
-    { schema: { body: updateProjectBodySchema, params: idParamSchema } },
+    {
+      schema: {
+        body: updateProjectBodySchema,
+        params: idParamSchema,
+        response: { 200: projectResponseSchema },
+      },
+    },
     async (request, reply) => {
       const { name, description } = request.body;
       const id = Number(request.params.id);
@@ -146,7 +191,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
 
   app.delete<{ Params: IdParams }>(
     '/projects/:id',
-    { schema: { params: idParamSchema } },
+    { schema: { params: idParamSchema, response: { 204: { type: 'null', description: 'No content' } } } },
     async (request, reply) => {
       const id = Number(request.params.id);
 

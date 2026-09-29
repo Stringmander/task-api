@@ -6,13 +6,66 @@ info:
     is scoped to the authenticated user at every layer.
   version: 0.1.0
 components:
-  schemas: {}
+  schemas:
+    def-0:
+      description: A project
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      title: projectResponseSchema
+    def-1:
+      description: A task
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+        priority:
+          type: string
+        dueDate:
+          type: string
+          nullable: true
+        position:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      title: taskResponseSchema
 paths:
   /health:
     get:
       responses:
         '200':
-          description: Default Response
+          description: Liveness status
+          content:
+            application/json:
+              schema:
+                description: Liveness status
+                type: object
+                properties:
+                  status:
+                    type: string
   /auth/register:
     post:
       requestBody:
@@ -40,8 +93,22 @@ paths:
                   minLength: 1
                   maxLength: 100
       responses:
-        '200':
-          description: Default Response
+        '201':
+          description: A user
+          content:
+            application/json:
+              schema:
+                description: A user
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  email:
+                    type: string
+                  displayName:
+                    type: string
+                  createdAt:
+                    type: string
   /auth/login:
     post:
       requestBody:
@@ -65,7 +132,17 @@ paths:
                   maxLength: 72
       responses:
         '200':
-          description: Default Response
+          description: An access/refresh token pair
+          content:
+            application/json:
+              schema:
+                description: An access/refresh token pair
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
   /auth/refresh:
     post:
       requestBody:
@@ -84,12 +161,29 @@ paths:
                   maxLength: 2048
       responses:
         '200':
-          description: Default Response
+          description: An access/refresh token pair
+          content:
+            application/json:
+              schema:
+                description: An access/refresh token pair
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
   /projects:
     get:
       responses:
         '200':
-          description: Default Response
+          description: A list of projects
+          content:
+            application/json:
+              schema:
+                description: A list of projects
+                type: array
+                items:
+                  $ref: '#/components/schemas/def-0'
     post:
       requestBody:
         required: true
@@ -109,8 +203,27 @@ paths:
                   type: string
                   nullable: true
       responses:
-        '200':
-          description: Default Response
+        '201':
+          description: A project
+          content:
+            application/json:
+              schema:
+                description: A project
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  userId:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
+                    nullable: true
+                  createdAt:
+                    type: string
+                  updatedAt:
+                    type: string
   /projects/{id}:
     get:
       parameters:
@@ -122,7 +235,26 @@ paths:
           required: true
       responses:
         '200':
-          description: Default Response
+          description: A project
+          content:
+            application/json:
+              schema:
+                description: A project
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  userId:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
+                    nullable: true
+                  createdAt:
+                    type: string
+                  updatedAt:
+                    type: string
     patch:
       requestBody:
         required: true
@@ -148,7 +280,26 @@ paths:
           required: true
       responses:
         '200':
-          description: Default Response
+          description: A project
+          content:
+            application/json:
+              schema:
+                description: A project
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  userId:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
+                    nullable: true
+                  createdAt:
+                    type: string
+                  updatedAt:
+                    type: string
     delete:
       parameters:
         - schema:
@@ -158,8 +309,8 @@ paths:
           name: id
           required: true
       responses:
-        '200':
-          description: Default Response
+        '204':
+          description: No content
   /projects/{id}/tasks:
     get:
       parameters:
@@ -171,7 +322,14 @@ paths:
           required: true
       responses:
         '200':
-          description: Default Response
+          description: A list of tasks
+          content:
+            application/json:
+              schema:
+                description: A list of tasks
+                type: array
+                items:
+                  $ref: '#/components/schemas/def-1'
     post:
       requestBody:
         required: true
@@ -216,8 +374,36 @@ paths:
           name: id
           required: true
       responses:
-        '200':
-          description: Default Response
+        '201':
+          description: A task
+          content:
+            application/json:
+              schema:
+                description: A task
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  projectId:
+                    type: integer
+                  title:
+                    type: string
+                  description:
+                    type: string
+                    nullable: true
+                  status:
+                    type: string
+                  priority:
+                    type: string
+                  dueDate:
+                    type: string
+                    nullable: true
+                  position:
+                    type: integer
+                  createdAt:
+                    type: string
+                  updatedAt:
+                    type: string
   /tasks/{id}:
     get:
       parameters:
@@ -229,7 +415,35 @@ paths:
           required: true
       responses:
         '200':
-          description: Default Response
+          description: A task
+          content:
+            application/json:
+              schema:
+                description: A task
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  projectId:
+                    type: integer
+                  title:
+                    type: string
+                  description:
+                    type: string
+                    nullable: true
+                  status:
+                    type: string
+                  priority:
+                    type: string
+                  dueDate:
+                    type: string
+                    nullable: true
+                  position:
+                    type: integer
+                  createdAt:
+                    type: string
+                  updatedAt:
+                    type: string
     patch:
       requestBody:
         required: true
@@ -273,7 +487,35 @@ paths:
           required: true
       responses:
         '200':
-          description: Default Response
+          description: A task
+          content:
+            application/json:
+              schema:
+                description: A task
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  projectId:
+                    type: integer
+                  title:
+                    type: string
+                  description:
+                    type: string
+                    nullable: true
+                  status:
+                    type: string
+                  priority:
+                    type: string
+                  dueDate:
+                    type: string
+                    nullable: true
+                  position:
+                    type: integer
+                  createdAt:
+                    type: string
+                  updatedAt:
+                    type: string
     delete:
       parameters:
         - schema:
@@ -283,5 +525,5 @@ paths:
           name: id
           required: true
       responses:
-        '200':
-          description: Default Response
+        '204':
+          description: No content

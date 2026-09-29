@@ -64,6 +64,26 @@ const refreshBodySchema = {
   },
 } as const;
 
+const userResponseSchema = {
+  description: 'A user',
+  type: 'object',
+  properties: {
+    id: { type: 'integer' },
+    email: { type: 'string' },
+    displayName: { type: 'string' },
+    createdAt: { type: 'string' },
+  },
+} as const;
+
+const tokenPairResponseSchema = {
+  description: 'An access/refresh token pair',
+  type: 'object',
+  properties: {
+    accessToken: { type: 'string' },
+    refreshToken: { type: 'string' },
+  },
+} as const;
+
 export interface LoginBody {
   email: string;
   password: string;
@@ -80,7 +100,10 @@ interface RefreshBody {
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: RegisterBody }>(
     '/auth/register',
-    { schema: { body: registerBodySchema }, config: { public: true } },
+    {
+      schema: { body: registerBodySchema, response: { 201: userResponseSchema } },
+      config: { public: true },
+    },
     async (request, reply) => {
       const { password, displayName } = request.body;
       const email = request.body.email.toLowerCase();
@@ -132,7 +155,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.post<{ Body: LoginBody }>(
     '/auth/login',
-    { schema: { body: loginBodySchema }, config: { public: true } },
+    {
+      schema: { body: loginBodySchema, response: { 200: tokenPairResponseSchema } },
+      config: { public: true },
+    },
     async (request, reply) => {
       const email = request.body.email.toLowerCase();
 
@@ -168,7 +194,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.post<{ Body: RefreshBody }>(
     '/auth/refresh',
-    { schema: { body: refreshBodySchema }, config: { public: true } },
+    {
+      schema: { body: refreshBodySchema, response: { 200: tokenPairResponseSchema } },
+      config: { public: true },
+    },
     async (request, reply) => {
       const requestRefreshToken = request.body.refreshToken;
 

@@ -38,9 +38,26 @@ export function buildApp(): FastifyInstance {
   // queues this after swagger in the same way authRoutes/projectRoutes/
   // taskRoutes below already do, which is why those show up correctly.
   void app.register(async (instance) => {
-    instance.get('/health', { config: { public: true } }, async () => {
-      return { status: 'ok' };
-    });
+    instance.get(
+      '/health',
+      {
+        config: { public: true },
+        schema: {
+          response: {
+            200: {
+              description: 'Liveness status',
+              type: 'object',
+              properties: {
+                status: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      async () => {
+        return { status: 'ok' };
+      },
+    );
 
     // Raw spec only, no Swagger UI: the interactive UI plugin
     // (@fastify/swagger-ui) auto-registers its own routes with no way to
