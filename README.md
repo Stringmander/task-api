@@ -20,7 +20,8 @@ documented end-to-end.
 | ORM        | Drizzle with drizzle-kit migrations (SQL files committed)   |
 | Testing    | Vitest via Fastify `inject()` against a real database       |
 | Containers | Multi-stage Docker build, docker-compose for local Postgres |
-| API docs   | OpenAPI spec generated from route schemas via `@fastify/swagger` |
+| API docs   | OpenAPI spec generated from route request/response schemas via `@fastify/swagger` |
+| CORS       | `@fastify/cors`, allowed origin driven by `CORS_ORIGIN`     |
 
 ## Prerequisites
 
@@ -121,6 +122,12 @@ All `/projects` and `/tasks` routes above require `Authorization: Bearer <access
 - Login and register return the same `401` for an unknown email as for a wrong password — no user enumeration via response differences.
 - A single Fastify `preHandler` hook verifies the Bearer token on every route by default and fails closed: a route has to opt out explicitly (`config: { public: true }`, used by `/health`, `/openapi.json`, and `/auth/*` itself) rather than opt in, so a route that forgets to declare itself protected stays protected anyway.
 
+## CORS
+
+Cross-origin requests from a browser-based frontend are allowed via [`@fastify/cors`](https://github.com/fastify/fastify-cors), configured with a single allowed origin from the `CORS_ORIGIN` env var (defaults to `http://localhost:5173`, Vite's dev port — see `.env.example`).
+
+Preflight `OPTIONS` requests are handled before the Bearer-auth preHandler runs, not after: `@fastify/cors` registers an `onRequest` hook, and Fastify always runs `onRequest` ahead of `preHandler` regardless of registration order. A credential-less preflight is answered and short-circuited there; an actual cross-origin request still goes through the full pipeline afterward and is rejected without a valid token exactly as before — only the preflight itself is exempt, which is correct CORS behavior, not a gap in auth.
+
 ## Database
 
 Three tables: `users`, `projects`, `tasks` (plus Drizzle's migration bookkeeping). Schema changes are managed exclusively through committed SQL migrations:
@@ -153,7 +160,7 @@ npm test
 
 ## API Specification
 
-An OpenAPI 3.0 specification is generated directly from the route validation schemas via [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) — never hand-edited, since it's derived from code, not maintained alongside it.
+An OpenAPI 3.0 specification is generated directly from each route's request *and response* schemas via [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) — never hand-edited, since it's derived from code, not maintained alongside it. Response schemas aren't just documentation, either: Fastify uses them as a serialization whitelist, so they're enforced at runtime, not only reflected in the spec.
 
 - **Committed copy:** [`openapi.yaml`](/openapi.yaml), regenerated with `npm run docs:openapi` whenever a route schema changes.
 - **Live copy:** `GET /openapi.json` on a running server — always current, no regeneration step.
