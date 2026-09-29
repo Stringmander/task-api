@@ -111,7 +111,13 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
 
   app.get<{ Params: IdParams }>(
     '/projects/:id/tasks',
-    { schema: { params: idParamSchema, response: { 200: tasksResponseSchema } } },
+    {
+      schema: {
+        params: idParamSchema,
+        response: { 200: tasksResponseSchema },
+        security: [{ bearerAuth: [] }],
+      },
+    },
     async (request, reply) => {
       // Safe as a plain Number(): idParamSchema's pattern caps id at 15
       // digits, well under Number.MAX_SAFE_INTEGER, and the id column is a
@@ -144,6 +150,7 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
         body: createTaskBodySchema,
         params: idParamSchema,
         response: { 201: taskResponseSchema },
+        security: [{ bearerAuth: [] }],
       },
     },
     async (request, reply) => {
@@ -175,7 +182,13 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
 
   app.get<{ Params: IdParams }>(
     '/tasks/:id',
-    { schema: { params: idParamSchema, response: { 200: taskResponseSchema } } },
+    {
+      schema: {
+        params: idParamSchema,
+        response: { 200: taskResponseSchema },
+        security: [{ bearerAuth: [] }],
+      },
+    },
     async (request, reply) => {
       const taskId = Number(request.params.id);
 
@@ -195,6 +208,7 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
         body: updateTaskBodySchema,
         params: idParamSchema,
         response: { 200: taskResponseSchema },
+        security: [{ bearerAuth: [] }],
       },
     },
     async (request, reply) => {
@@ -228,6 +242,7 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         params: idParamSchema,
         response: { 204: { type: 'null', description: 'No content' } },
+        security: [{ bearerAuth: [] }],
       },
     },
     async (request, reply) => {

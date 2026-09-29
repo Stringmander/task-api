@@ -41,6 +41,20 @@ export function buildApp(): FastifyInstance {
           'Task management REST API. Users own projects; projects contain tasks; access is scoped to the authenticated user at every layer.',
         version: '0.1.0',
       },
+      // Declares the scheme itself, but doesn't apply it anywhere by
+      // itself - that's what a route's own schema.security: [{ bearerAuth:
+      // [] }] does. Without this, the generated spec has no way to say
+      // which routes actually need a token; a client codegen tool can't
+      // see that at all from the request/response schemas alone.
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
+      },
     },
   });
 

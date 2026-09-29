@@ -109,7 +109,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
 
   app.get(
     '/projects',
-    { schema: { response: { 200: projectsResponseSchema } } },
+    { schema: { response: { 200: projectsResponseSchema }, security: [{ bearerAuth: [] }] } },
     async (request, reply) => {
       const userProjects = await db
         .select()
@@ -122,7 +122,13 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
 
   app.post<{ Body: CreateProjectBody }>(
     '/projects',
-    { schema: { body: createProjectBodySchema, response: { 201: projectResponseSchema } } },
+    {
+      schema: {
+        body: createProjectBodySchema,
+        response: { 201: projectResponseSchema },
+        security: [{ bearerAuth: [] }],
+      },
+    },
     async (request, reply) => {
       const { name, description } = request.body;
 
@@ -147,7 +153,13 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
 
   app.get<{ Params: IdParams }>(
     '/projects/:id',
-    { schema: { params: idParamSchema, response: { 200: projectResponseSchema } } },
+    {
+      schema: {
+        params: idParamSchema,
+        response: { 200: projectResponseSchema },
+        security: [{ bearerAuth: [] }],
+      },
+    },
     async (request, reply) => {
       // Safe as a plain Number(): idParamSchema's pattern caps id at 15
       // digits, well under Number.MAX_SAFE_INTEGER, and the id column is a
@@ -175,6 +187,7 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
         body: updateProjectBodySchema,
         params: idParamSchema,
         response: { 200: projectResponseSchema },
+        security: [{ bearerAuth: [] }],
       },
     },
     async (request, reply) => {
@@ -211,7 +224,13 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
     // both matches the handler's actual empty reply.code(204).send() and
     // makes @fastify/swagger correctly omit the `content` block for this
     // response in openapi.yaml, rather than claiming a body that isn't there.
-    { schema: { params: idParamSchema, response: { 204: { type: 'null', description: 'No content' } } } },
+    {
+      schema: {
+        params: idParamSchema,
+        response: { 204: { type: 'null', description: 'No content' } },
+        security: [{ bearerAuth: [] }],
+      },
+    },
     async (request, reply) => {
       const id = Number(request.params.id);
 
