@@ -6,6 +6,9 @@ import { sendError } from '../lib/http-errors.js';
 import { idParamSchema, IdParams } from '../lib/params.js';
 import { findOwnedProject, findOwnedTask } from '../lib/ownership.js';
 
+const taskStatusEnum = ['todo', 'in_progress', 'done'] as const;
+const taskPriorityEnum = ['low', 'medium', 'high'] as const;
+
 const createTaskBodySchema = {
   type: 'object',
   required: ['title'],
@@ -13,8 +16,8 @@ const createTaskBodySchema = {
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 100 },
     description: { type: ['string', 'null'] },
-    status: { type: 'string', enum: ['todo', 'in_progress', 'done'] },
-    priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+    status: { type: 'string', enum: taskStatusEnum },
+    priority: { type: 'string', enum: taskPriorityEnum },
     dueDate: { type: ['string', 'null'], format: 'date' },
     position: { type: 'integer' },
   },
@@ -26,15 +29,20 @@ const updateTaskBodySchema = {
   properties: {
     title: { type: 'string', minLength: 1, maxLength: 100 },
     description: { type: ['string', 'null'] },
-    status: { type: 'string', enum: ['todo', 'in_progress', 'done'] },
-    priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+    status: { type: 'string', enum: taskStatusEnum },
+    priority: { type: 'string', enum: taskPriorityEnum },
     dueDate: { type: ['string', 'null'], format: 'date' },
     position: { type: 'integer' },
   },
 } as const;
 
-export type TaskStatus = 'todo' | 'in_progress' | 'done';
-export type TaskPriority = 'low' | 'medium' | 'high';
+// Derived from the const arrays above via indexed access on `typeof`, not
+// hand-typed: `taskStatusEnum` is `readonly ['todo', 'in_progress', 'done']`
+// (the `as const`), and `(typeof taskStatusEnum)[number]` reads as "the
+// type of whatever indexing this array with a number produces" - the union
+// of its literal elements. One list to edit, not two that could drift.
+export type TaskStatus = (typeof taskStatusEnum)[number];
+export type TaskPriority = (typeof taskPriorityEnum)[number];
 
 interface CreateTaskBody {
   title: string;
@@ -79,8 +87,8 @@ const taskResponseSchema = {
     projectId: { type: 'integer' },
     title: { type: 'string' },
     description: { type: ['string', 'null'] },
-    status: { type: 'string' },
-    priority: { type: 'string' },
+    status: { type: 'string', enum: taskStatusEnum },
+    priority: { type: 'string', enum: taskPriorityEnum },
     dueDate: { type: ['string', 'null'] },
     position: { type: 'integer' },
     createdAt: { type: 'string' },
@@ -216,7 +224,12 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
     '/tasks/:id',
     // { type: 'null' }, not a bare `null` - see the DELETE /projects/:id
     // comment in projects.ts for why (a bare null crashes the app at boot).
-    { schema: { params: idParamSchema, response: { 204: { type: 'null', description: 'No content' } } } },
+    {
+      schema: {
+        params: idParamSchema,
+        response: { 204: { type: 'null', description: 'No content' } },
+      },
+    },
     async (request, reply) => {
       const taskId = Number(request.params.id);
 

@@ -58,8 +58,16 @@ components:
           nullable: true
         status:
           type: string
+          enum:
+            - todo
+            - in_progress
+            - done
         priority:
           type: string
+          enum:
+            - low
+            - medium
+            - high
         dueDate:
           type: string
           nullable: true
@@ -456,8 +464,16 @@ paths:
                     nullable: true
                   status:
                     type: string
+                    enum:
+                      - todo
+                      - in_progress
+                      - done
                   priority:
                     type: string
+                    enum:
+                      - low
+                      - medium
+                      - high
                   dueDate:
                     type: string
                     nullable: true
@@ -507,8 +523,16 @@ paths:
                     nullable: true
                   status:
                     type: string
+                    enum:
+                      - todo
+                      - in_progress
+                      - done
                   priority:
                     type: string
+                    enum:
+                      - low
+                      - medium
+                      - high
                   dueDate:
                     type: string
                     nullable: true
@@ -590,8 +614,16 @@ paths:
                     nullable: true
                   status:
                     type: string
+                    enum:
+                      - todo
+                      - in_progress
+                      - done
                   priority:
                     type: string
+                    enum:
+                      - low
+                      - medium
+                      - high
                   dueDate:
                     type: string
                     nullable: true
