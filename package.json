@@ -17,6 +17,7 @@
     "docs:openapi": "tsx src/scripts/generate-openapi.ts"
   },
   "dependencies": {
+    "@fastify/cors": "^11.3.0",
     "@fastify/swagger": "^9.9.0",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",
