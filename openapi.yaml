@@ -10,6 +10,13 @@ components:
     def-0:
       description: A project
       type: object
+      required:
+        - id
+        - userId
+        - name
+        - description
+        - createdAt
+        - updatedAt
       properties:
         id:
           type: integer
@@ -28,6 +35,17 @@ components:
     def-1:
       description: A task
       type: object
+      required:
+        - id
+        - projectId
+        - title
+        - description
+        - status
+        - priority
+        - dueDate
+        - position
+        - createdAt
+        - updatedAt
       properties:
         id:
           type: integer
@@ -63,6 +81,8 @@ paths:
               schema:
                 description: Liveness status
                 type: object
+                required:
+                  - status
                 properties:
                   status:
                     type: string
@@ -100,6 +120,11 @@ paths:
               schema:
                 description: A user
                 type: object
+                required:
+                  - id
+                  - email
+                  - displayName
+                  - createdAt
                 properties:
                   id:
                     type: integer
@@ -138,6 +163,9 @@ paths:
               schema:
                 description: An access/refresh token pair
                 type: object
+                required:
+                  - accessToken
+                  - refreshToken
                 properties:
                   accessToken:
                     type: string
@@ -167,6 +195,9 @@ paths:
               schema:
                 description: An access/refresh token pair
                 type: object
+                required:
+                  - accessToken
+                  - refreshToken
                 properties:
                   accessToken:
                     type: string
@@ -210,6 +241,13 @@ paths:
               schema:
                 description: A project
                 type: object
+                required:
+                  - id
+                  - userId
+                  - name
+                  - description
+                  - createdAt
+                  - updatedAt
                 properties:
                   id:
                     type: integer
@@ -241,6 +279,13 @@ paths:
               schema:
                 description: A project
                 type: object
+                required:
+                  - id
+                  - userId
+                  - name
+                  - description
+                  - createdAt
+                  - updatedAt
                 properties:
                   id:
                     type: integer
@@ -286,6 +331,13 @@ paths:
               schema:
                 description: A project
                 type: object
+                required:
+                  - id
+                  - userId
+                  - name
+                  - description
+                  - createdAt
+                  - updatedAt
                 properties:
                   id:
                     type: integer
@@ -381,6 +433,17 @@ paths:
               schema:
                 description: A task
                 type: object
+                required:
+                  - id
+                  - projectId
+                  - title
+                  - description
+                  - status
+                  - priority
+                  - dueDate
+                  - position
+                  - createdAt
+                  - updatedAt
                 properties:
                   id:
                     type: integer
@@ -421,6 +484,17 @@ paths:
               schema:
                 description: A task
                 type: object
+                required:
+                  - id
+                  - projectId
+                  - title
+                  - description
+                  - status
+                  - priority
+                  - dueDate
+                  - position
+                  - createdAt
+                  - updatedAt
                 properties:
                   id:
                     type: integer
@@ -493,6 +567,17 @@ paths:
               schema:
                 description: A task
                 type: object
+                required:
+                  - id
+                  - projectId
+                  - title
+                  - description
+                  - status
+                  - priority
+                  - dueDate
+                  - position
+                  - createdAt
+                  - updatedAt
                 properties:
                   id:
                     type: integer

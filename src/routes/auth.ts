@@ -67,6 +67,7 @@ const refreshBodySchema = {
 const userResponseSchema = {
   description: 'A user',
   type: 'object',
+  required: ['id', 'email', 'displayName', 'createdAt'],
   properties: {
     id: { type: 'integer' },
     email: { type: 'string' },
@@ -78,6 +79,7 @@ const userResponseSchema = {
 const tokenPairResponseSchema = {
   description: 'An access/refresh token pair',
   type: 'object',
+  required: ['accessToken', 'refreshToken'],
   properties: {
     accessToken: { type: 'string' },
     refreshToken: { type: 'string' },

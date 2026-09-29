@@ -63,6 +63,7 @@ export function buildApp(): FastifyInstance {
             200: {
               description: 'Liveness status',
               type: 'object',
+              required: ['status'],
               properties: {
                 status: { type: 'string' },
               },

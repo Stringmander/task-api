@@ -57,10 +57,19 @@ const updateProjectBodySchema = {
 // specific operation would be wrong on the other two. The HTTP method and
 // path already say what the operation is; this description's job is just
 // to say what's in the body.
+// required lists every property below, not just the non-nullable ones:
+// "required" in JSON Schema means the key is always present, which is true
+// here even for description (it's always a key on the row, just sometimes
+// null-valued) - it says nothing about whether the value can be null. This
+// isn't only a documentation nicety either: Fastify's response serializer
+// enforces it at runtime, throwing a 500 if a handler ever actually omits
+// a field listed here (verified by hand), so it doubles as a guarantee
+// that this list and .returning()'s actual shape can't silently drift.
 const projectResponseSchema = {
   $id: 'projectResponseSchema',
   description: 'A project',
   type: 'object',
+  required: ['id', 'userId', 'name', 'description', 'createdAt', 'updatedAt'],
   properties: {
     id: { type: 'integer' },
     userId: { type: 'integer' },

@@ -54,10 +54,26 @@ export type UpdateTaskBody = Partial<CreateTaskBody>;
 // the properties listed here regardless of that flag, silently dropping
 // whatever else the handler returned. A field missing here disappears from
 // the real response, not just from openapi.yaml.
+// required lists every property, including the nullable ones - see the
+// equivalent comment on projectResponseSchema in projects.ts for why
+// (nullable still means always-present-as-a-key, and Fastify enforces this
+// at runtime, not just in the generated spec).
 const taskResponseSchema = {
   $id: 'taskResponseSchema',
   description: 'A task',
   type: 'object',
+  required: [
+    'id',
+    'projectId',
+    'title',
+    'description',
+    'status',
+    'priority',
+    'dueDate',
+    'position',
+    'createdAt',
+    'updatedAt',
+  ],
   properties: {
     id: { type: 'integer' },
     projectId: { type: 'integer' },
