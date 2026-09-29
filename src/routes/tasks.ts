@@ -47,6 +47,13 @@ interface CreateTaskBody {
 
 export type UpdateTaskBody = Partial<CreateTaskBody>;
 
+// Matches every column .returning() actually returns from `tasks`
+// (schema.ts) - no more, no less. Unlike the body schemas above,
+// additionalProperties: false isn't needed here: a response schema doesn't
+// reject anything, it's a serialization whitelist - Fastify only writes out
+// the properties listed here regardless of that flag, silently dropping
+// whatever else the handler returned. A field missing here disappears from
+// the real response, not just from openapi.yaml.
 const taskResponseSchema = {
   $id: 'taskResponseSchema',
   description: 'A task',
@@ -72,6 +79,10 @@ const tasksResponseSchema = {
 } as const;
 
 export async function taskRoutes(app: FastifyInstance): Promise<void> {
+  // A schema's `$id` doesn't register it anywhere by itself - it's just a
+  // property on the object. addSchema is what actually makes it resolvable
+  // by $ref: 'taskResponseSchema' below, and it has to run before any
+  // route that references it is registered.
   app.addSchema(taskResponseSchema);
 
   app.get<{ Params: IdParams }>(
@@ -187,6 +198,8 @@ export async function taskRoutes(app: FastifyInstance): Promise<void> {
 
   app.delete<{ Params: IdParams }>(
     '/tasks/:id',
+    // { type: 'null' }, not a bare `null` - see the DELETE /projects/:id
+    // comment in projects.ts for why (a bare null crashes the app at boot).
     { schema: { params: idParamSchema, response: { 204: { type: 'null', description: 'No content' } } } },
     async (request, reply) => {
       const taskId = Number(request.params.id);

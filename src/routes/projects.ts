@@ -52,6 +52,11 @@ const updateProjectBodySchema = {
 // sync with .returning()'s actual shape a correctness requirement, not
 // just a documentation nicety - a field missing here disappears from the
 // real response, not just from openapi.yaml.
+// "A project", not "The created project" - this same object is response:
+// 201 on POST, response: 200 on GET and PATCH, so a description tied to one
+// specific operation would be wrong on the other two. The HTTP method and
+// path already say what the operation is; this description's job is just
+// to say what's in the body.
 const projectResponseSchema = {
   $id: 'projectResponseSchema',
   description: 'A project',
@@ -191,6 +196,12 @@ export async function projectRoutes(app: FastifyInstance): Promise<void> {
 
   app.delete<{ Params: IdParams }>(
     '/projects/:id',
+    // { type: 'null' }, not a bare `null` - a bare `null` isn't a valid JSON
+    // Schema at all and crashes the app at boot (verified by hand:
+    // "Cannot read properties of null (reading 'isFluentSchema')"). This form
+    // both matches the handler's actual empty reply.code(204).send() and
+    // makes @fastify/swagger correctly omit the `content` block for this
+    // response in openapi.yaml, rather than claiming a body that isn't there.
     { schema: { params: idParamSchema, response: { 204: { type: 'null', description: 'No content' } } } },
     async (request, reply) => {
       const id = Number(request.params.id);
