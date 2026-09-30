@@ -38,6 +38,10 @@ describe('GET /users/me', () => {
     });
 
     expect(response.statusCode).toBe(200);
+    // email only, not the full object: this test's job is "the happy path
+    // basically works." Proving the response is specifically THIS caller's
+    // row, not someone else's, is authorization.test.ts's more rigorous
+    // multi-user check - duplicating that here wouldn't add coverage.
     expect(response.json().email).toBe(email);
   });
 });
