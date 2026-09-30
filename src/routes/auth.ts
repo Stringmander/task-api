@@ -65,7 +65,7 @@ const refreshBodySchema = {
 } as const;
 
 const userResponseSchema = {
-  description: 'A user',
+  description: 'The newly registered user',
   type: 'object',
   required: ['id', 'email', 'displayName', 'createdAt'],
   properties: {

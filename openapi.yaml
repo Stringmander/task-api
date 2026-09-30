@@ -127,11 +127,11 @@ paths:
                   maxLength: 100
       responses:
         '201':
-          description: A user
+          description: The newly registered user
           content:
             application/json:
               schema:
-                description: A user
+                description: The newly registered user
                 type: object
                 required:
                   - id
@@ -215,6 +215,29 @@ paths:
                   accessToken:
                     type: string
                   refreshToken:
+                    type: string
+  /users/me:
+    get:
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: The current user
+          content:
+            application/json:
+              schema:
+                description: The current user
+                type: object
+                required:
+                  - id
+                  - email
+                  - displayName
+                properties:
+                  id:
+                    type: integer
+                  email:
+                    type: string
+                  displayName:
                     type: string
   /projects:
     get:

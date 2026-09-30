@@ -4,7 +4,7 @@ import { createTestProject } from './projects-fixtures.js';
 import { expectSuccess } from './http-assertions.js';
 
 export async function createTestTask(app: FastifyInstance, overrides: UpdateTaskBody = {}) {
-  const { accessToken, refreshToken, userId, project } = await createTestProject(app);
+  const { owner, project } = await createTestProject(app);
 
   const payload = {
     title: 'Write auth middleware',
@@ -19,7 +19,7 @@ export async function createTestTask(app: FastifyInstance, overrides: UpdateTask
   const response = await app.inject({
     method: 'POST',
     url: `/projects/${project.id}/tasks`,
-    headers: { authorization: `Bearer ${accessToken}` },
+    headers: { authorization: `Bearer ${owner.accessToken}` },
     payload,
   });
 
@@ -38,5 +38,5 @@ export async function createTestTask(app: FastifyInstance, overrides: UpdateTask
     updatedAt: string;
   };
 
-  return { accessToken, refreshToken, userId, project, task: body };
+  return { owner, project, task: body };
 }

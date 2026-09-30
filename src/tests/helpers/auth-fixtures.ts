@@ -48,5 +48,5 @@ export async function loginTestUser(app: FastifyInstance, overrides: Partial<Log
 
   const body = response.json() as { accessToken: string; refreshToken: string };
 
-  return { userId: id, ...body };
+  return { userId: id, email, ...body };
 }

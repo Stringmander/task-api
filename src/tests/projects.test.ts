@@ -157,12 +157,12 @@ describe('POST /projects', () => {
 
 describe('GET /projects', () => {
   it("200s and returns a list of the current user's projects", async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'GET',
       url: '/projects',
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -185,12 +185,12 @@ describe('GET /projects', () => {
 
 describe('GET /projects/:id', () => {
   it('200s and returns the project', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'GET',
       url: `/projects/${project.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -204,14 +204,14 @@ describe('GET /projects/:id', () => {
 
 describe('PATCH /projects/:id', () => {
   it('200s and returns the project with updated name', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const payload = { name: 'Renamed Project' };
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/projects/${project.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload,
     });
 
@@ -223,14 +223,14 @@ describe('PATCH /projects/:id', () => {
   });
 
   it('200s and returns the project with updated description', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const payload = { description: 'Updated description only; name should survive untouched' };
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/projects/${project.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload,
     });
 
@@ -248,12 +248,12 @@ describe('PATCH /projects/:id', () => {
   // Testing only POST's validation would never catch the two schemas
   // silently drifting apart from each other.
   it('400s on an empty name', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/projects/${project.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { name: '' },
     });
 
@@ -261,12 +261,12 @@ describe('PATCH /projects/:id', () => {
   });
 
   it('400s one character past the name limit', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/projects/${project.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: {
         name: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       },
@@ -276,12 +276,12 @@ describe('PATCH /projects/:id', () => {
   });
 
   it('400s on an invalid name', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/projects/${project.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { name: 12345 },
     });
 
@@ -291,12 +291,12 @@ describe('PATCH /projects/:id', () => {
 
 describe('DELETE /projects/:id', () => {
   it("204s and cascades to delete the project's tasks", async () => {
-    const { accessToken, project, task } = await createTestTask(app);
+    const { owner, project, task } = await createTestTask(app);
 
     const deleteResponse = await app.inject({
       method: 'DELETE',
       url: `/projects/${project.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
     });
     expect(deleteResponse.statusCode).toBe(204);
 
@@ -309,7 +309,7 @@ describe('DELETE /projects/:id', () => {
     const getTaskResponse = await app.inject({
       method: 'GET',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
     });
     expect(getTaskResponse.statusCode).toBe(403);
   });

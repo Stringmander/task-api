@@ -4,7 +4,7 @@ import { loginTestUser } from './auth-fixtures.js';
 import { expectSuccess } from './http-assertions.js';
 
 export async function createTestProject(app: FastifyInstance, overrides: UpdateProjectBody = {}) {
-  const owner = await loginTestUser(app);
+  const { userId, email, accessToken, refreshToken } = await loginTestUser(app);
 
   const payload = {
     name: 'Portfolio Project',
@@ -15,7 +15,7 @@ export async function createTestProject(app: FastifyInstance, overrides: UpdateP
   const response = await app.inject({
     method: 'POST',
     url: '/projects',
-    headers: { authorization: `Bearer ${owner.accessToken}` },
+    headers: { authorization: `Bearer ${accessToken}` },
     payload,
   });
 
@@ -30,12 +30,12 @@ export async function createTestProject(app: FastifyInstance, overrides: UpdateP
     updatedAt: string;
   };
 
-  // { ...owner, project }, not a flat merge of everything: POST /projects's
-  // response already has its own userId field (the project's owner), which
-  // would silently collide with owner's userId (whoever is actually logged
-  // in) if both were spread into one flat object. Keeping `project` nested
-  // means a caller can compare the two independently - e.g. asserting a
-  // project's userId matches the id of whoever created it - instead of
-  // losing one value to whichever happened to spread last.
-  return { ...owner, project: body };
+  // owner and project both nested, not flattened: POST /projects's response
+  // already has its own userId field (the project's owner), which would
+  // silently collide with owner's userId (whoever is actually logged in) if
+  // both were spread into one flat object. Nesting both means a caller can
+  // compare the two independently - e.g. asserting a project's userId
+  // matches the id of whoever created it - instead of losing one value to
+  // whichever happened to spread last.
+  return { owner: { userId, email, accessToken, refreshToken }, project: body };
 }

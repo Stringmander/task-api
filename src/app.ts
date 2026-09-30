@@ -6,6 +6,7 @@ import { registerBearerAuth } from './plugins/bearer-auth.js';
 import { authRoutes } from './routes/auth.js';
 import { projectRoutes } from './routes/projects.js';
 import { taskRoutes } from './routes/tasks.js';
+import { userRoutes } from './routes/users.js';
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({
@@ -99,12 +100,17 @@ export function buildApp(): FastifyInstance {
     // route (Swagger Editor, Postman import) expects; the committed
     // openapi.yaml (see src/scripts/generate-openapi.ts) covers the
     // human-readable form.
-    instance.get('/openapi.json', { config: { public: true }, schema: { hide: true } }, async () => {
-      return app.swagger();
-    });
+    instance.get(
+      '/openapi.json',
+      { config: { public: true }, schema: { hide: true } },
+      async () => {
+        return app.swagger();
+      },
+    );
   });
 
   void app.register(authRoutes);
+  void app.register(userRoutes);
   void app.register(projectRoutes);
   void app.register(taskRoutes);
 

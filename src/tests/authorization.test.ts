@@ -47,17 +47,20 @@ afterAll(async () => {
   // there's no single "last file" hook to hang a pool.end() on instead.
 });
 
-describe('GET /projects', () => {
-  // These three run against one representative route rather than every
-  // protected one: the Bearer preHandler is a single Fastify hook
-  // (registerBearerAuth) applied identically ahead of every route it
-  // guards, so re-running the same three checks against PATCH /tasks/:id
-  // or any other protected endpoint would exercise the exact same hook
-  // code, not a route-specific variant of it.
+describe('GET /users/me', () => {
+  // These three run against /users/me specifically, not just "one
+  // representative route" arbitrarily: the Bearer preHandler is a single
+  // Fastify hook (registerBearerAuth) applied identically ahead of every
+  // route it guards, so re-running the same three checks against
+  // PATCH /tasks/:id or any other protected endpoint would exercise the
+  // exact same hook code, not a route-specific variant of it. /users/me is
+  // the simplest authenticated route in the API - no body, no params, no
+  // ownership-filtering logic of its own - so these tests exercise nothing
+  // but the hook itself, with zero incidental route behavior mixed in.
   it('401s without authorization header', async () => {
     const response = await app.inject({
       method: 'GET',
-      url: '/projects',
+      url: '/users/me',
     });
 
     expect(response.statusCode).toBe(401);
@@ -66,7 +69,7 @@ describe('GET /projects', () => {
   it('401s on a garbage token', async () => {
     const response = await app.inject({
       method: 'GET',
-      url: '/projects',
+      url: '/users/me',
       headers: { authorization: 'Bearer garbage.not.valid' },
     });
 
@@ -76,21 +79,37 @@ describe('GET /projects', () => {
   it('401s on an expired token', async () => {
     const response = await app.inject({
       method: 'GET',
-      url: '/projects',
+      url: '/users/me',
       headers: { authorization: `Bearer ${await signExpiredAccessToken()}` },
     });
 
     expect(response.statusCode).toBe(401);
   });
 
+  it('200s and returns the correct user among multiple', async () => {
+    const user = await loginTestUser(app);
+    await loginTestUser(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/users/me',
+      headers: { authorization: `Bearer ${user.accessToken}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().id).toBe(user.userId);
+  });
+});
+
+describe('GET /projects', () => {
   it("200s and excludes other users' projects from the list", async () => {
-    const { accessToken, project: myProject } = await createTestProject(app);
+    const { owner, project: myProject } = await createTestProject(app);
     await createTestProject(app);
 
     const response = await app.inject({
       method: 'GET',
       url: '/projects',
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
     });
 
     expect(response.statusCode).toBe(200);

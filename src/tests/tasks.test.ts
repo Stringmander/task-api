@@ -30,7 +30,7 @@ afterAll(async () => {
 
 describe('POST /projects/:id/tasks', () => {
   it('201s and returns the created task', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const payload = {
       title: 'Write auth middleware',
@@ -44,7 +44,7 @@ describe('POST /projects/:id/tasks', () => {
     const response = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload,
     });
 
@@ -73,14 +73,14 @@ describe('POST /projects/:id/tasks', () => {
   });
 
   it('201s and returns the task with default properties', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const payload = { title: 'Minimal Task' };
 
     const response = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload,
     });
 
@@ -97,7 +97,7 @@ describe('POST /projects/:id/tasks', () => {
   });
 
   it('201s at exactly the 100-character title limit', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const payload = {
       title:
@@ -107,7 +107,7 @@ describe('POST /projects/:id/tasks', () => {
     const response = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload,
     });
 
@@ -120,12 +120,12 @@ describe('POST /projects/:id/tasks', () => {
   // only one of the two couldn't catch the other silently disappearing from
   // the schema.
   it('400s on an omitted title', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { description: 'This task has no title.' },
     });
 
@@ -133,12 +133,12 @@ describe('POST /projects/:id/tasks', () => {
   });
 
   it('400s on an empty title', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { title: '' },
     });
 
@@ -146,12 +146,12 @@ describe('POST /projects/:id/tasks', () => {
   });
 
   it('400s one character past the title limit', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: {
         title:
           'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
@@ -162,12 +162,12 @@ describe('POST /projects/:id/tasks', () => {
   });
 
   it('400s on an invalid title', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { title: 12345 },
     });
 
@@ -175,12 +175,12 @@ describe('POST /projects/:id/tasks', () => {
   });
 
   it('400s on an invalid status enum value', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { status: 'archived' },
     });
 
@@ -188,12 +188,12 @@ describe('POST /projects/:id/tasks', () => {
   });
 
   it('400s on an invalid priority enum value', async () => {
-    const { accessToken, project } = await createTestProject(app);
+    const { owner, project } = await createTestProject(app);
 
     const response = await app.inject({
       method: 'POST',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { priority: 'urgent' },
     });
 
@@ -203,12 +203,12 @@ describe('POST /projects/:id/tasks', () => {
 
 describe('GET /projects/:id/tasks', () => {
   it("200s and returns a list of the queried project's tasks", async () => {
-    const { accessToken, project, task } = await createTestTask(app);
+    const { owner, project, task } = await createTestTask(app);
 
     const response = await app.inject({
       method: 'GET',
       url: `/projects/${project.id}/tasks`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -238,12 +238,12 @@ describe('GET /projects/:id/tasks', () => {
 
 describe('GET /tasks/:id', () => {
   it('200s and returns the task', async () => {
-    const { accessToken, task } = await createTestTask(app);
+    const { owner, task } = await createTestTask(app);
 
     const response = await app.inject({
       method: 'GET',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -271,14 +271,14 @@ describe('PATCH /tasks/:id', () => {
   // single-field test would, by asserting every untouched field survived
   // rather than just one.
   it('200s and returns the task with only the updated fields changed', async () => {
-    const { accessToken, task } = await createTestTask(app);
+    const { owner, task } = await createTestTask(app);
 
     const payload = { status: 'done', priority: 'low' };
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload,
     });
 
@@ -299,12 +299,12 @@ describe('PATCH /tasks/:id', () => {
   // createTaskBodySchema. Testing only POST's validation would never catch
   // the two schemas silently drifting apart from each other.
   it('400s on an empty title', async () => {
-    const { accessToken, task } = await createTestTask(app);
+    const { owner, task } = await createTestTask(app);
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { title: '' },
     });
 
@@ -312,12 +312,12 @@ describe('PATCH /tasks/:id', () => {
   });
 
   it('400s one character past the title limit', async () => {
-    const { accessToken, task } = await createTestTask(app);
+    const { owner, task } = await createTestTask(app);
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: {
         title:
           'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
@@ -328,12 +328,12 @@ describe('PATCH /tasks/:id', () => {
   });
 
   it('400s on an invalid title', async () => {
-    const { accessToken, task } = await createTestTask(app);
+    const { owner, task } = await createTestTask(app);
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { title: 12345 },
     });
 
@@ -341,12 +341,12 @@ describe('PATCH /tasks/:id', () => {
   });
 
   it('400s on an invalid status enum value', async () => {
-    const { accessToken, task } = await createTestTask(app);
+    const { owner, task } = await createTestTask(app);
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { status: 'archived' },
     });
 
@@ -354,12 +354,12 @@ describe('PATCH /tasks/:id', () => {
   });
 
   it('400s on an invalid priority enum value', async () => {
-    const { accessToken, task } = await createTestTask(app);
+    const { owner, task } = await createTestTask(app);
 
     const response = await app.inject({
       method: 'PATCH',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
       payload: { priority: 'urgent' },
     });
 
@@ -369,12 +369,12 @@ describe('PATCH /tasks/:id', () => {
 
 describe('DELETE /tasks/:id', () => {
   it('204s and deletes the task', async () => {
-    const { accessToken, task } = await createTestTask(app);
+    const { owner, task } = await createTestTask(app);
 
     const deleteResponse = await app.inject({
       method: 'DELETE',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
     });
     expect(deleteResponse.statusCode).toBe(204);
 
@@ -384,7 +384,7 @@ describe('DELETE /tasks/:id', () => {
     const getResponse = await app.inject({
       method: 'GET',
       url: `/tasks/${task.id}`,
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: { authorization: `Bearer ${owner.accessToken}` },
     });
     expect(getResponse.statusCode).toBe(403);
   });

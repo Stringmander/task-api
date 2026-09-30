@@ -55,6 +55,14 @@ describe('user lifecycle', () => {
     expect(login.statusCode).toBe(200);
     const headers = { authorization: `Bearer ${login.json().accessToken}` };
 
+    const me = await app.inject({
+      method: 'GET',
+      url: '/users/me',
+      headers,
+    });
+    expect(me.statusCode).toBe(200);
+    expect(me.json().email).toBe(email);
+
     const project = await app.inject({
       method: 'POST',
       url: '/projects',
