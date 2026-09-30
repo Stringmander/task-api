@@ -1,7 +1,7 @@
 info:
   name: create-project-empty-name
   type: http
-  seq: 4
+  seq: 2
 
 http:
   method: POST

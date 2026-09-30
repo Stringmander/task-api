@@ -1,11 +1,12 @@
 info:
-  name: list-projects-no-token
+  name: get-me
   type: http
   seq: 1
 
 http:
   method: GET
-  url: "{{baseUrl}}/projects"
+  url: "{{baseUrl}}/users/me"
+  auth: inherit
 
 settings:
   encodeUrl: true

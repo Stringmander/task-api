@@ -1,7 +1,7 @@
 info:
   name: delete-project-cascade-delete
   type: http
-  seq: 10
+  seq: 8
 
 http:
   method: DELETE

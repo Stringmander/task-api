@@ -1,7 +1,7 @@
 info:
   name: create-task-invalid-priority
   type: http
-  seq: 6
+  seq: 4
 
 http:
   method: POST
