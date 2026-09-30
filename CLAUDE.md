@@ -36,9 +36,10 @@ Deletion cascades: user -> projects -> tasks.
 IDs are bigint serial. Timestamps are timestamptz.
 CHECK constraints enforce status/priority values.
 
-## Endpoints (14)
+## Endpoints (15)
 
 Auth: POST /auth/register, /auth/login, /auth/refresh
+Users (auth required): GET /users/me
 Projects (auth required, owner-scoped):
   GET/POST /projects, GET/PATCH/DELETE /projects/:id
 Tasks (auth required, ownership via project join):

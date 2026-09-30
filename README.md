@@ -106,6 +106,14 @@ Requests and responses are JSON. Unexpected input types are rejected with `400` 
 
 Deleting a project cascades to its tasks at the database level (foreign key `ON DELETE CASCADE`).
 
+### Users
+
+| Method | Path        | Description         |
+| ------ | ----------- | -------------------- |
+| GET    | `/users/me` | Get the current user |
+
+Returns `{ id, email, displayName }` for whoever the Bearer token belongs to — how a frontend rehydrates "who's logged in" after a page refresh, without decoding the token client-side or caching stale data from an earlier response. 401s (not the usual 403) if the token is valid but its user no longer exists — there's no client-supplied id here to guard against enumerating, unlike `/projects/:id`/`/tasks/:id`.
+
 ### Authentication
 
 | Method | Path             | Description                                     |
@@ -114,7 +122,7 @@ Deleting a project cascades to its tasks at the database level (foreign key `ON 
 | POST   | `/auth/login`    | Exchange credentials for an access/refresh pair  |
 | POST   | `/auth/refresh`  | Rotate a refresh token for a new pair            |
 
-All `/projects` and `/tasks` routes above require `Authorization: Bearer <accessToken>`; `"current user"` in their descriptions means whoever that token belongs to, verified on every request, not passed by the client.
+All `/projects`, `/tasks`, and `/users` routes above require `Authorization: Bearer <accessToken>`; `"current user"` in their descriptions means whoever that token belongs to, verified on every request, not passed by the client.
 
 - **Access tokens:** 15-minute expiry, stateless (payload is just `sub`/`iat`/`exp` — nothing revocable server-side).
 - **Refresh tokens:** 7-day expiry, tracked server-side (hashed, never stored raw) and rotated on every use — presenting one invalidates it and issues a new pair. A token that's already been rotated away (or never existed) is rejected identically to a garbage one; there's no way, or need, to tell "reused" apart from "never issued."
@@ -146,15 +154,16 @@ docker compose up -d db   # tests need Postgres running
 npm test
 ```
 
-55 integration tests (Vitest + Fastify's `inject()`, no mocking) against a real, disposable `taskapi_test` database — dropped and recreated fresh before the run, so there's no drift between what's tested and the current migrations:
+57 integration tests (Vitest + Fastify's `inject()`, no mocking) against a real, disposable `taskapi_test` database — dropped and recreated fresh before the run, so there's no drift between what's tested and the current migrations:
 
 | Suite                    | Tests | Covers                                                                                         |
 | ------------------------ | ----- | ------------------------------------------------------------------------------------------------ |
 | `auth.test.ts`           | 10    | Register/login/refresh - validation, duplicate email, rotation, reuse rejection                |
-| `authorization.test.ts`  | 11    | The Bearer preHandler itself (missing/garbage/expired token) and cross-user 403s on every mutating route |
+| `authorization.test.ts`  | 12    | The Bearer preHandler itself via `/users/me` (missing/garbage/expired token), cross-user 403s on every mutating route, and correct-identity resolution among multiple users |
 | `projects.test.ts`       | 15    | CRUD, validation boundaries, cascade-delete to a project's tasks                                |
 | `tasks.test.ts`          | 18    | CRUD, partial-update semantics, validation boundaries                                           |
-| `integration.test.ts`    | 1     | A full register → login → create → update → delete lifecycle                                    |
+| `users.test.ts`          | 1     | `GET /users/me` happy path                                                                       |
+| `integration.test.ts`    | 1     | A full register → login → check identity → create → update → delete lifecycle                   |
 
 `vitest.config.ts` runs test files sequentially (`fileParallelism: false`), since they share one database.
 
@@ -190,7 +199,7 @@ src/
 ├── app.ts        # builds the Fastify instance, registers plugins and routes
 ├── server.ts     # process entrypoint — starts listening
 ├── env.ts        # loads and validates environment variables
-├── routes/       # route definitions (auth, projects, tasks)
+├── routes/       # route definitions (auth, projects, tasks, users)
 ├── lib/          # shared logic (ownership checks, id param schema, error shaping, tokens)
 ├── db/           # Drizzle schema, client, and migration runner
 ├── plugins/      # Bearer-token preHandler — verifies access tokens, sets request.user
